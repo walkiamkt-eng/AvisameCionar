@@ -1,0 +1,12 @@
+{
+  "projectId": "appcionaravisame",
+  "appId":  "1:371061875433:web:8f7b7316adfeed44b34678",
+   "apiKey": "AIzaSyAWqDmWI3IxhB1JqrPe_99XIG3iTjViwnI",
+  "authDomain": "appcionaravisame.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "appcionaravisame.firebasestorage.app",
+  "messagingSenderId": "371061875433",
+  "measurementId": "",
+  "oAuthClientId": "362093971263-g1ja5126uk73b76haalvuua73cq6mo0h.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
+}

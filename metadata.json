@@ -1,0 +1,6 @@
+{
+  "name": "AVISAME",
+  "description": "Sistema Inteligente de Supervisión para (PAS) de Argentina.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

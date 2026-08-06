@@ -1,0 +1,176 @@
+{
+  "entities": {
+    "clientes": {
+      "title": "Clientes",
+      "description": "Clientes del PAS",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productorId": { "type": "string" },
+        "cuitCuilDni": { "type": "string" },
+        "tipo": { "type": "string" },
+        "nombreRazonSocial": { "type": "string" },
+        "condicionIva": { "type": "string" },
+        "email": { "type": "string" },
+        "telefono": { "type": "string" },
+        "domicilio": { "type": "string" },
+        "localidad": { "type": "string" },
+        "provincia": { "type": "string" },
+        "perfilRiesgo": { "type": "string" },
+        "fechaAlta": { "type": "string" },
+        "estado": { "type": "string" },
+        "notas": { "type": "string" }
+      },
+      "required": ["cuitCuilDni", "nombreRazonSocial", "tipo"]
+    },
+    "aseguradoras": {
+      "title": "Aseguradoras",
+      "description": "Compañías Aseguradoras",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productorId": { "type": "string" },
+        "nombre": { "type": "string" },
+        "cuit": { "type": "string" },
+        "codigoProductor": { "type": "string" },
+        "codigoOrganizador": { "type": "string" },
+        "ramosHabilitados": { "type": "array", "items": { "type": "string" } },
+        "estadoSsn": { "type": "string" },
+        "telefonoSoporte": { "type": "string" },
+        "emailSuscripcion": { "type": "string" },
+        "comisionPromedio": { "type": "number" },
+        "estado": { "type": "string" }
+      },
+      "required": ["nombre", "cuit", "codigoProductor"]
+    },
+    "polizas": {
+      "title": "Pólizas",
+      "description": "Pólizas emitidas",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productorId": { "type": "string" },
+        "numeroPoliza": { "type": "string" },
+        "endoso": { "type": "string" },
+        "clienteId": { "type": "string" },
+        "aseguradoraId": { "type": "string" },
+        "ramo": { "type": "string" },
+        "vigenciaDesde": { "type": "string" },
+        "vigenciaHasta": { "type": "string" },
+        "sumaAsegurada": { "type": "number" },
+        "primaNeta": { "type": "number" },
+        "premioTotal": { "type": "number" },
+        "planCuotas": { "type": "number" },
+        "estado": { "type": "string" },
+        "objetoAsegurado": { "type": "string" }
+      },
+      "required": ["numeroPoliza", "clienteId", "aseguradoraId"]
+    },
+    "vehiculos": {
+      "title": "Vehículos",
+      "description": "Flotas y vehículos",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productorId": { "type": "string" },
+        "dominioChasis": { "type": "string" },
+        "es0kmSinPatente": { "type": "boolean" },
+        "marca": { "type": "string" },
+        "modelo": { "type": "string" },
+        "anio": { "type": "number" },
+        "tipoUso": { "type": "string" },
+        "combustible": { "type": "string" },
+        "poseeGnc": { "type": "boolean" },
+        "vencimientoGnc": { "type": "string" },
+        "polizaId": { "type": "string" },
+        "clienteId": { "type": "string" },
+        "estado": { "type": "string" }
+      },
+      "required": ["dominioChasis", "marca", "modelo", "clienteId"]
+    },
+    "contratosArt": {
+      "title": "Contratos ART",
+      "description": "Contratos ART de Ley 24.557",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productorId": { "type": "string" },
+        "numeroContrato": { "type": "string" },
+        "clienteId": { "type": "string" },
+        "aseguradoraId": { "type": "string" },
+        "ciiuActividad": { "type": "string" },
+        "descripcionActividad": { "type": "string" },
+        "masaSalarialEstimada": { "type": "number" },
+        "cantidadTrabajadores": { "type": "number" },
+        "alicuotaFija": { "type": "number" },
+        "alicuotaVariable": { "type": "number" },
+        "fechaInicioContrato": { "type": "string" },
+        "mesesPermanencia": { "type": "number" },
+        "esElegibleTraspaso": { "type": "boolean" },
+        "clausulasNoRepeticion": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["numeroContrato", "clienteId", "aseguradoraId"]
+    },
+    "reglas": {
+      "title": "Reglas de Automatización",
+      "description": "Motor de Automatización",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productorId": { "type": "string" },
+        "titulo": { "type": "string" },
+        "descripcion": { "type": "string" },
+        "procesoOrigen": { "type": "number" },
+        "disparador": { "type": "string" },
+        "frecuencia": { "type": "string" },
+        "modo": { "type": "string" },
+        "estado": { "type": "string" },
+        "ejecucionesTotales": { "type": "number" },
+        "ultimaEjecucion": { "type": "string" }
+      },
+      "required": ["titulo", "procesoOrigen"]
+    },
+    "alertasTareas": {
+      "title": "Alertas y Tareas",
+      "description": "Alertas y Tareas de la agenda",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productorId": { "type": "string" },
+        "titulo": { "type": "string" },
+        "descripcion": { "type": "string" },
+        "procesoOrigen": { "type": "number" },
+        "prioridad": { "type": "string" },
+        "fechaCreacion": { "type": "string" },
+        "vencimiento": { "type": "string" },
+        "estado": { "type": "string" },
+        "clienteNombre": { "type": "string" },
+        "targetProceso": { "type": "string" }
+      },
+      "required": ["titulo", "prioridad"]
+    },
+    "renovaciones": {
+      "title": "Renovaciones",
+      "description": "Pipeline de Renovación e Infraseguro",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productorId": { "type": "string" },
+        "polizaId": { "type": "string" },
+        "clienteNombre": { "type": "string" },
+        "clienteCuit": { "type": "string" },
+        "aseguradoraNombre": { "type": "string" },
+        "ramo": { "type": "string" },
+        "vigenciaHasta": { "type": "string" },
+        "diasParaVencer": { "type": "number" },
+        "sumaAseguradaActual": { "type": "number" },
+        "sumaSugeridaInflacion": { "type": "number" },
+        "premioActual": { "type": "number" },
+        "premioNuevaPropuesta": { "type": "number" },
+        "estadoRenovacion": { "type": "string" },
+        "siniestralidad": { "type": "string" }
+      },
+      "required": ["polizaId", "clienteNombre"]
+    }
+  }
+}
