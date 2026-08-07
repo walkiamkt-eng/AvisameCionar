@@ -268,6 +268,14 @@ function MainAppContent() {
     }
   };
 
+  const handleUpdatePoliza = async (polizaActualizada: Poliza) => {
+    const polizaCompleta: Poliza = { ...polizaActualizada, productorId };
+    setPolizas((prev) =>
+      prev.map((p) => (p.id === polizaActualizada.id ? polizaCompleta : p))
+    );
+    await saveDocument('polizas', polizaCompleta, productorId);
+  };
+
   const handleAddVehiculo = async (nuevo: Omit<Vehiculo, 'id'>) => {
     const id = `veh-${Date.now()}`;
     const vehiculoCompleto: Vehiculo = { ...nuevo, id, productorId };
@@ -441,6 +449,7 @@ function MainAppContent() {
               clientes={clientes}
               aseguradoras={aseguradoras}
               onAddPoliza={handleAddPoliza}
+              onUpdatePoliza={handleUpdatePoliza}
               onNavigate={setActiveProcessId}
             />
           )}

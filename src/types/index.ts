@@ -46,6 +46,17 @@ export type RamoSeguro =
   | 'Responsabilidad Civil'
   | 'Agro';
 
+export interface EndosoItem {
+  id: string;
+  numero: string;
+  fecha: string;
+  tipo: 'Modificación de Cobertura' | 'Aumento de Suma Asegurada' | 'Cambio de Domicilio' | 'Alta/Baja de Riesgo' | 'Refacturación / Cuotas' | 'Otro';
+  descripcion: string;
+  sumaAseguradaAnterior?: number;
+  sumaAseguradaNueva?: number;
+  premioAjuste?: number;
+}
+
 export interface Poliza {
   id: string;
   productorId?: string;
@@ -61,7 +72,10 @@ export interface Poliza {
   premioTotal: number;
   planCuotas: number;
   estado: 'Vigente' | 'Anulada' | 'En Renovación' | 'Pendiente Emisión';
-  objetoAsegurado: string; // ej: "Toyota Hilux AB123CD" o "Av. Corrientes 1234, CABA"
+  objetoAsegurado?: string; // Mantenido para retrocompatibilidad
+  bienAsegurado: string; // ej: "Toyota Hilux SRX 4x4 (Dominio AB 123 CD)"
+  riesgoCubierto: string; // ej: "Automotores - Todo Riesgo c/Franquicia ARS 150.000"
+  endosos?: EndosoItem[]; // Historial ilimitado de endosos registrados
 }
 
 export interface Vehiculo {

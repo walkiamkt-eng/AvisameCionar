@@ -169,7 +169,10 @@ export const INITIAL_POLIZAS: Poliza[] = [
     premioTotal: 185000,
     planCuotas: 12,
     estado: 'Vigente',
-    objetoAsegurado: 'Flota 3 Unidades (Camión Mercedes Benz Actros + 2 Hilux)'
+    bienAsegurado: 'Flota 3 Unidades (Camión Mercedes Benz Actros + 2 Hilux)',
+    riesgoCubierto: 'Terceros Completo + Granizo y Cristales sin Franquicia',
+    objetoAsegurado: 'Flota 3 Unidades (Camión Mercedes Benz Actros + 2 Hilux)',
+    endosos: []
   },
   {
     id: 'pol-102',
@@ -185,7 +188,21 @@ export const INITIAL_POLIZAS: Poliza[] = [
     premioTotal: 72000,
     planCuotas: 6,
     estado: 'En Renovación',
-    objetoAsegurado: 'Volkswagen Suran Cross 1.6 (Dominio AB 432 CD) c/GNC'
+    bienAsegurado: 'Volkswagen Suran Cross 1.6 Highline (Dominio AB 432 CD)',
+    riesgoCubierto: 'Todo Riesgo con Franquicia de ARS 150.000 + Equipo GNC',
+    objetoAsegurado: 'Volkswagen Suran Cross 1.6 (Dominio AB 432 CD) c/GNC',
+    endosos: [
+      {
+        id: 'end-102-1',
+        numero: '001',
+        fecha: '2025-06-10',
+        tipo: 'Aumento de Suma Asegurada',
+        descripcion: 'Ajuste semestral por inflación de la suma asegurada de la unidad.',
+        sumaAseguradaAnterior: 15000000,
+        sumaAseguradaNueva: 18500000,
+        premioAjuste: 8000
+      }
+    ]
   },
   {
     id: 'pol-103',
@@ -201,7 +218,10 @@ export const INITIAL_POLIZAS: Poliza[] = [
     premioTotal: 38000,
     planCuotas: 12,
     estado: 'Vigente',
-    objetoAsegurado: 'Inmueble residencial Av. Colón 890 4to B, Córdoba'
+    bienAsegurado: 'Inmueble residencial Av. Colón 890 4to B, Córdoba',
+    riesgoCubierto: 'Incendio Edificio/Contenido, Robo/Hurto General y Cristales',
+    objetoAsegurado: 'Inmueble residencial Av. Colón 890 4to B, Córdoba',
+    endosos: []
   },
   {
     id: 'pol-104',
@@ -217,7 +237,10 @@ export const INITIAL_POLIZAS: Poliza[] = [
     premioTotal: 490000,
     planCuotas: 4,
     estado: 'Vigente',
-    objetoAsegurado: 'Maquinaria Agrícola Cosechadora John Deere S780 + Sembradora'
+    bienAsegurado: 'Cosechadora John Deere S780 + Sembradora Pierobon',
+    riesgoCubierto: 'Todo Riesgo Maquinaria Agrícola + RC en Tránsito y Campo',
+    objetoAsegurado: 'Maquinaria Agrícola Cosechadora John Deere S780 + Sembradora',
+    endosos: []
   },
   {
     id: 'pol-105',
@@ -233,7 +256,29 @@ export const INITIAL_POLIZAS: Poliza[] = [
     premioTotal: 128000,
     planCuotas: 12,
     estado: 'En Renovación',
-    objetoAsegurado: 'Estudio de Arquitectura y Maquetas, Vic. López'
+    bienAsegurado: 'Local Comercial de Estudio de Arquitectura en Vicente López',
+    riesgoCubierto: 'Integral de Comercio: Incendio, Robo Equipos Informáticos y RC',
+    objetoAsegurado: 'Estudio de Arquitectura y Maquetas, Vic. López',
+    endosos: [
+      {
+        id: 'end-105-1',
+        numero: '001',
+        fecha: '2025-09-15',
+        tipo: 'Modificación de Cobertura',
+        descripcion: 'Inclusión de equipos portátiles (Laptops) en cobertura de Robo fuera de local.',
+        premioAjuste: 4500
+      },
+      {
+        id: 'end-105-2',
+        numero: '002',
+        fecha: '2026-01-20',
+        tipo: 'Aumento de Suma Asegurada',
+        descripcion: 'Endoso de actualización de suma asegurada de mobiliario e impresoras 3D.',
+        sumaAseguradaAnterior: 80000000,
+        sumaAseguradaNueva: 110000000,
+        premioAjuste: 12000
+      }
+    ]
   }
 ];
 
