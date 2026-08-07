@@ -37,14 +37,23 @@ export interface Aseguradora {
 
 export type RamoSeguro = 
   | 'Automotores'
+  | 'Motovehículos'
   | 'Combinado Familiar'
   | 'Integral de Comercio'
-  | 'Accidentes Personales'
-  | 'Vida'
-  | 'Riesgos del Trabajo (ART)'
-  | 'Caución'
+  | 'Integral de Consorcio'
+  | 'Incendio'
   | 'Responsabilidad Civil'
-  | 'Agro';
+  | 'Accidentes Personales'
+  | 'Vida Individual'
+  | 'Vida Colectivo'
+  | 'Riesgos del Trabajo (ART)'
+  | 'Caución / Garantías'
+  | 'Transporte y Carga'
+  | 'Seguro Técnico / Equipos'
+  | 'Robo y Riesgos Similares'
+  | 'Riesgos Agrícolas / Granizo'
+  | 'Salud y Sepelio'
+  | 'Otros Ramos';
 
 export interface EndosoItem {
   id: string;

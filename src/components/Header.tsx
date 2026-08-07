@@ -1,6 +1,7 @@
 import React from 'react';
-import { Shield, Bell, Plus, Search, HelpCircle, LogOut, User as UserIcon, Activity } from 'lucide-react';
+import { Bell, Plus, Search, HelpCircle, LogOut, User as UserIcon, Activity } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { AvisameLogo } from './AvisameLogo';
 
 interface HeaderProps {
   activeProcessId: string;
@@ -42,23 +43,8 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="bg-[#005a9e] text-white border-b border-[#007bc1] sticky top-0 z-30 shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
-        {/* Brand Logo */}
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#4ae2fe] to-[#0577b6] flex items-center justify-center text-white shadow-md border border-white/20">
-            <Shield className="w-6 h-6 stroke-[2.2]" />
-          </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xl font-extrabold tracking-tight text-white drop-shadow-xs">AVISAME</span>
-              <span className="bg-[#00aeef]/20 text-[#4ae2fe] border border-[#00aeef]/40 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                PAS Argentina
-              </span>
-            </div>
-            <p className="text-[11px] text-[#c7c7c7] font-medium hidden sm:block">
-              Sistema Inteligente de Supervisión para Seguros
-            </p>
-          </div>
-        </div>
+        {/* Brand Official Logo */}
+        <AvisameLogo variant="header" size="md" />
 
         {/* Current Active Path Indicator */}
         <div className="hidden md:flex items-center space-x-2 bg-white/10 px-3 py-1.5 rounded-lg border border-white/10">

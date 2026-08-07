@@ -256,20 +256,32 @@ export const PolizasView: React.FC<PolizasViewProps> = ({
         </div>
 
         <div className="flex items-center space-x-2 w-full sm:w-auto text-xs overflow-x-auto pb-1 sm:pb-0">
-          <span className="text-[#6d6e71] font-bold">Ramo:</span>
-          {['Todos', 'Automotores', 'Combinado Familiar', 'Integral de Comercio', 'Accidentes Personales', 'Agro'].map((r) => (
-            <button
-              key={r}
-              onClick={() => setRamoFilter(r)}
-              className={`px-3 py-1 rounded-md font-medium transition-all whitespace-nowrap ${
-                ramoFilter === r
-                  ? 'bg-[#005a9e] text-white shadow-xs'
-                  : 'bg-white border border-[#c7c7c7] text-[#6d6e71] hover:text-[#005a9e]'
-              }`}
-            >
-              {r}
-            </button>
-          ))}
+          <span className="text-[#6d6e71] font-bold shrink-0">Ramo:</span>
+          <select
+            value={ramoFilter}
+            onChange={(e) => setRamoFilter(e.target.value)}
+            className="px-3 py-1 bg-white border border-[#c7c7c7] rounded-lg text-xs text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#005a9e]"
+          >
+            <option value="Todos">Todos los Ramos (18 Ramos)</option>
+            <option value="Automotores">Automotores</option>
+            <option value="Motovehículos">Motovehículos</option>
+            <option value="Combinado Familiar">Combinado Familiar</option>
+            <option value="Integral de Comercio">Integral de Comercio</option>
+            <option value="Integral de Consorcio">Integral de Consorcio</option>
+            <option value="Incendio">Incendio</option>
+            <option value="Responsabilidad Civil">Responsabilidad Civil</option>
+            <option value="Accidentes Personales">Accidentes Personales</option>
+            <option value="Vida Individual">Vida Individual</option>
+            <option value="Vida Colectivo">Vida Colectivo</option>
+            <option value="Riesgos del Trabajo (ART)">Riesgos del Trabajo (ART)</option>
+            <option value="Caución / Garantías">Caución / Garantías</option>
+            <option value="Transporte y Carga">Transporte y Carga</option>
+            <option value="Seguro Técnico / Equipos">Seguro Técnico / Equipos</option>
+            <option value="Robo y Riesgos Similares">Robo y Riesgos Similares</option>
+            <option value="Riesgos Agrícolas / Granizo">Riesgos Agrícolas / Granizo</option>
+            <option value="Salud y Sepelio">Salud y Sepelio</option>
+            <option value="Otros Ramos">Otros Ramos</option>
+          </select>
         </div>
       </div>
 
@@ -450,50 +462,101 @@ export const PolizasView: React.FC<PolizasViewProps> = ({
                   <select
                     value={ramo}
                     onChange={(e) => setRamo(e.target.value as RamoSeguro)}
-                    className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg focus:ring-2 focus:ring-[#005a9e]"
+                    className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg focus:ring-2 focus:ring-[#005a9e] font-semibold text-slate-900"
                   >
                     <option value="Automotores">Automotores</option>
+                    <option value="Motovehículos">Motovehículos</option>
                     <option value="Combinado Familiar">Combinado Familiar</option>
                     <option value="Integral de Comercio">Integral de Comercio</option>
-                    <option value="Accidentes Personales">Accidentes Personales</option>
-                    <option value="Agro">Agro</option>
-                    <option value="Caución">Caución</option>
-                    <option value="Vida">Vida</option>
+                    <option value="Integral de Consorcio">Integral de Consorcio</option>
+                    <option value="Incendio">Incendio</option>
                     <option value="Responsabilidad Civil">Responsabilidad Civil</option>
+                    <option value="Accidentes Personales">Accidentes Personales</option>
+                    <option value="Vida Individual">Vida Individual</option>
+                    <option value="Vida Colectivo">Vida Colectivo</option>
+                    <option value="Riesgos del Trabajo (ART)">Riesgos del Trabajo (ART)</option>
+                    <option value="Caución / Garantías">Caución / Garantías</option>
+                    <option value="Transporte y Carga">Transporte y Carga</option>
+                    <option value="Seguro Técnico / Equipos">Seguro Técnico / Equipos</option>
+                    <option value="Robo y Riesgos Similares">Robo y Riesgos Similares</option>
+                    <option value="Riesgos Agrícolas / Granizo">Riesgos Agrícolas / Granizo</option>
+                    <option value="Salud y Sepelio">Salud y Sepelio</option>
+                    <option value="Otros Ramos">Otros Ramos</option>
                   </select>
                 </div>
               </div>
 
-              {/* CAMPOS SEPARADOS: Bien Asegurado & Riesgo Cubierto */}
+              {/* CAMPOS SEPARADOS CON GUÍA DINÁMICA SEGÚN EL RAMO */}
               <div className="bg-slate-50 p-3.5 rounded-lg border border-[#c7c7c7] space-y-3">
-                <h4 className="font-bold text-[#005a9e] text-xs uppercase tracking-wider">
-                  Definición de Objeto y Cobertura
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-[#005a9e] text-xs uppercase tracking-wider">
+                    Definición de Objeto y Cobertura ({ramo})
+                  </h4>
+                  <span className="text-[10px] bg-[#00aeef]/20 text-[#005a9e] font-bold px-2 py-0.5 rounded">
+                    Ramo Especializado
+                  </span>
+                </div>
 
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">Bien Asegurado *</label>
                   <input
                     type="text"
-                    placeholder="Ej: Toyota Hilux SRX 4x4 (Dominio AA 123 BB) / Propiedad en Av. Colón 890"
+                    placeholder={
+                      ramo === 'Incendio'
+                        ? 'Ej: Inmueble Industrial / Depósito de Mercaderías en Av. Mitre 2400'
+                        : ramo === 'Integral de Consorcio'
+                        ? 'Ej: Consorcio de Propietarios Edificio San Martín 150 (Ley 13.512 / CABA)'
+                        : ramo === 'Responsabilidad Civil'
+                        ? 'Ej: Empresa de Construcción y Montajes Industriales S.A.'
+                        : ramo === 'Automotores'
+                        ? 'Ej: Toyota Hilux SRX 4x4 (Dominio AA 123 BB)'
+                        : ramo === 'Motovehículos'
+                        ? 'Ej: Honda Twister 250cc (Dominio A 123 CDE)'
+                        : ramo === 'Caución / Garantías'
+                        ? 'Ej: Obra Pública Licitación N° 45/2026 - Pavimentación Urbana'
+                        : ramo === 'Transporte y Carga'
+                        ? 'Ej: Carga Terrestre de Electrodomésticos en Tránsito Nacional'
+                        : ramo === 'Seguro Técnico / Equipos'
+                        ? 'Ej: Excavadora Caterpillar 320D - N° Serie CAT0320D9921'
+                        : ramo === 'Riesgos Agrícolas / Granizo'
+                        ? 'Ej: Cultivo Soja de Primera 450 Hectáreas - Lote San Pedro'
+                        : 'Ej: Detalle de la propiedad, persona, mercancía o riesgo asegurado'
+                    }
                     value={bienAsegurado}
                     onChange={(e) => setBienAsegurado(e.target.value)}
                     className="w-full p-2 bg-white border border-[#c7c7c7] rounded-lg focus:ring-2 focus:ring-[#005a9e]"
                     required
                   />
-                  <span className="text-[10px] text-[#6d6e71]">Detalle físico del vehículo, inmueble, mercadería o persona asegurada.</span>
+                  <span className="text-[10px] text-[#6d6e71]">Detalle físico del objeto, inmueble, lote, obra, vehículo o persona asegurada.</span>
                 </div>
 
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">Riesgo Cubierto *</label>
                   <input
                     type="text"
-                    placeholder="Ej: Todo Riesgo c/Franquicia de $150.000 / Incendio Edificio y Contenido"
+                    placeholder={
+                      ramo === 'Incendio'
+                        ? 'Ej: Incendio Edificio, Contenido General, Remoción de Escombros y Terremoto'
+                        : ramo === 'Integral de Consorcio'
+                        ? 'Ej: Incendio Edificio / RC Ascensores, Calderas, Mantenimiento y Garajes'
+                        : ramo === 'Responsabilidad Civil'
+                        ? 'Ej: RC Comprensiva, Linderos, Carteles, Caída de Objetos y Refacciones'
+                        : ramo === 'Automotores'
+                        ? 'Ej: Todo Riesgo con Franquicia Fija de ARS 200.000 + Granizo e Inundación'
+                        : ramo === 'Caución / Garantías'
+                        ? 'Ej: Garantía de Adjudicación / Cumplimiento de Contrato / Fondo de Reparo'
+                        : ramo === 'Seguro Técnico / Equipos'
+                        ? 'Ej: Todo Riesgo Maquinaria Contratista + Daño Eléctrico + Incendio'
+                        : ramo === 'Riesgos Agrícolas / Granizo'
+                        ? 'Ej: Granizo Tradicional + Helada + Viento Fuerte y Resembrado'
+                        : 'Ej: Cobertura principal contratada y sublímites adicionales acordados'
+                    }
                     value={riesgoCubierto}
                     onChange={(e) => setRiesgoCubierto(e.target.value)}
                     className="w-full p-2 bg-white border border-[#c7c7c7] rounded-lg focus:ring-2 focus:ring-[#005a9e]"
                     required
                   />
-                  <span className="text-[10px] text-[#6d6e71]">Cobertura específica acordada con la aseguradora.</span>
+                  <span className="text-[10px] text-[#6d6e71]">Alcance de cobertura, franquicias y cláusulas específicas del contrato.</span>
                 </div>
               </div>
 
