@@ -39,12 +39,18 @@ export type RamoSeguro =
   | 'Automotores'
   | 'Combinado Familiar'
   | 'Integral de Comercio'
+  | 'Integral de Consorcio'
+  | 'Incendio'
+  | 'Responsabilidad Civil'
   | 'Accidentes Personales'
   | 'Vida'
   | 'Riesgos del Trabajo (ART)'
   | 'Caución'
-  | 'Responsabilidad Civil'
-  | 'Agro';
+  | 'Agro'
+  | 'Seguro Técnico'
+  | 'Transporte de Mercaderías'
+  | 'Robo y Riesgos Similares'
+  | 'Salud / Sepelio';
 
 export interface EndosoItem {
   id: string;

@@ -257,7 +257,24 @@ export const PolizasView: React.FC<PolizasViewProps> = ({
 
         <div className="flex items-center space-x-2 w-full sm:w-auto text-xs overflow-x-auto pb-1 sm:pb-0">
           <span className="text-[#6d6e71] font-bold">Ramo:</span>
-          {['Todos', 'Automotores', 'Combinado Familiar', 'Integral de Comercio', 'Accidentes Personales', 'Agro'].map((r) => (
+          {[
+            'Todos',
+            'Automotores',
+            'Combinado Familiar',
+            'Integral de Comercio',
+            'Integral de Consorcio',
+            'Incendio',
+            'Responsabilidad Civil',
+            'Accidentes Personales',
+            'Vida',
+            'Riesgos del Trabajo (ART)',
+            'Caución',
+            'Agro',
+            'Seguro Técnico',
+            'Transporte de Mercaderías',
+            'Robo y Riesgos Similares',
+            'Salud / Sepelio'
+          ].map((r) => (
             <button
               key={r}
               onClick={() => setRamoFilter(r)}
@@ -452,14 +469,21 @@ export const PolizasView: React.FC<PolizasViewProps> = ({
                     onChange={(e) => setRamo(e.target.value as RamoSeguro)}
                     className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg focus:ring-2 focus:ring-[#005a9e]"
                   >
-                    <option value="Automotores">Automotores</option>
-                    <option value="Combinado Familiar">Combinado Familiar</option>
-                    <option value="Integral de Comercio">Integral de Comercio</option>
                     <option value="Accidentes Personales">Accidentes Personales</option>
                     <option value="Agro">Agro</option>
+                    <option value="Automotores">Automotores</option>
                     <option value="Caución">Caución</option>
-                    <option value="Vida">Vida</option>
+                    <option value="Combinado Familiar">Combinado Familiar</option>
+                    <option value="Incendio">Incendio</option>
+                    <option value="Integral de Comercio">Integral de Comercio</option>
+                    <option value="Integral de Consorcio">Integral de Consorcio</option>
                     <option value="Responsabilidad Civil">Responsabilidad Civil</option>
+                    <option value="Riesgos del Trabajo (ART)">Riesgos del Trabajo (ART)</option>
+                    <option value="Robo y Riesgos Similares">Robo y Riesgos Similares</option>
+                    <option value="Salud / Sepelio">Salud / Sepelio</option>
+                    <option value="Seguro Técnico">Seguro Técnico</option>
+                    <option value="Transporte de Mercaderías">Transporte de Mercaderías</option>
+                    <option value="Vida">Vida</option>
                   </select>
                 </div>
               </div>
