@@ -78,6 +78,8 @@ export interface Poliza {
   premioTotal: number;
   planCuotas: number;
   estado: 'Vigente' | 'Anulada' | 'En Renovación' | 'Pendiente Emisión';
+  fechaAnulacion?: string;
+  motivoAnulacion?: string;
   objetoAsegurado?: string; // Mantenido para retrocompatibilidad
   bienAsegurado: string; // ej: "Toyota Hilux SRX 4x4 (Dominio AB 123 CD)"
   riesgoCubierto: string; // ej: "Automotores - Todo Riesgo c/Franquicia ARS 150.000"

@@ -483,6 +483,7 @@ function MainAppContent() {
           {activeProcessId === 'proceso-7' && (
             <RenovacionesView
               renovaciones={renovaciones}
+              polizas={polizas}
               onUpdateEstadoRenovacion={handleUpdateEstadoRenovacion}
             />
           )}

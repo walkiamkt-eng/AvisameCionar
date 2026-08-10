@@ -45,6 +45,8 @@ export const PolizasView: React.FC<PolizasViewProps> = ({
   const [bienAsegurado, setBienAsegurado] = useState('');
   const [riesgoCubierto, setRiesgoCubierto] = useState('');
   const [estado, setEstado] = useState<'Vigente' | 'Anulada' | 'En Renovación' | 'Pendiente Emisión'>('Vigente');
+  const [fechaAnulacion, setFechaAnulacion] = useState<string>('');
+  const [motivoAnulacion, setMotivoAnulacion] = useState<string>('');
 
   // Endoso Form State
   const [numEndosoNuevo, setNumEndosoNuevo] = useState('');
@@ -90,6 +92,8 @@ export const PolizasView: React.FC<PolizasViewProps> = ({
     setBienAsegurado('');
     setRiesgoCubierto('');
     setEstado('Vigente');
+    setFechaAnulacion('');
+    setMotivoAnulacion('');
     setShowModal(true);
   };
 
@@ -109,6 +113,8 @@ export const PolizasView: React.FC<PolizasViewProps> = ({
     setBienAsegurado(pol.bienAsegurado || pol.objetoAsegurado || '');
     setRiesgoCubierto(pol.riesgoCubierto || '');
     setEstado(pol.estado);
+    setFechaAnulacion(pol.fechaAnulacion || '');
+    setMotivoAnulacion(pol.motivoAnulacion || '');
     setShowModal(true);
   };
 
@@ -117,6 +123,17 @@ export const PolizasView: React.FC<PolizasViewProps> = ({
     if (!numPoliza.trim() || !bienAsegurado.trim() || !riesgoCubierto.trim()) {
       alert('Por favor complete los campos obligatorios (N° Póliza, Bien Asegurado y Riesgo Cubierto).');
       return;
+    }
+
+    if (estado === 'Anulada') {
+      if (!fechaAnulacion) {
+        alert('Por favor ingrese la fecha de anulación.');
+        return;
+      }
+      if (fechaAnulacion <= vigDesde || fechaAnulacion >= vigHasta) {
+        alert(`La fecha de anulación (${fechaAnulacion}) debe ser estrictamente posterior a la fecha de inicio (${vigDesde}) y anterior a la fecha de vencimiento (${vigHasta}).`);
+        return;
+      }
     }
 
     if (editingPoliza) {
@@ -138,7 +155,9 @@ export const PolizasView: React.FC<PolizasViewProps> = ({
           bienAsegurado,
           riesgoCubierto,
           objetoAsegurado: bienAsegurado,
-          estado
+          estado,
+          fechaAnulacion: estado === 'Anulada' ? fechaAnulacion : undefined,
+          motivoAnulacion: estado === 'Anulada' ? motivoAnulacion : undefined
         });
       }
     } else {
@@ -156,6 +175,8 @@ export const PolizasView: React.FC<PolizasViewProps> = ({
         premioTotal: Number(premioTotal),
         planCuotas: Number(planCuotas),
         estado,
+        fechaAnulacion: estado === 'Anulada' ? fechaAnulacion : undefined,
+        motivoAnulacion: estado === 'Anulada' ? motivoAnulacion : undefined,
         bienAsegurado,
         riesgoCubierto,
         objetoAsegurado: bienAsegurado,
@@ -352,7 +373,7 @@ export const PolizasView: React.FC<PolizasViewProps> = ({
                         ${pol.premioTotal.toLocaleString('es-AR')} <span className="text-[10px] text-[#9e9e9e]">({pol.planCuotas}c)</span>
                       </td>
                       <td className="p-3 text-center">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block ${
                           pol.estado === 'Vigente'
                             ? 'bg-emerald-100 text-emerald-800'
                             : pol.estado === 'En Renovación'
@@ -361,6 +382,16 @@ export const PolizasView: React.FC<PolizasViewProps> = ({
                         }`}>
                           {pol.estado}
                         </span>
+                        {pol.estado === 'Anulada' && pol.fechaAnulacion && (
+                          <div className="text-[9px] text-red-700 font-mono mt-1" title={pol.motivoAnulacion || 'Sin motivo especificado'}>
+                            Anulada: {pol.fechaAnulacion}
+                            {pol.motivoAnulacion && (
+                              <span className="block text-[8px] italic text-[#6d6e71] truncate max-w-[100px] mx-auto">
+                                {pol.motivoAnulacion}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="p-3 text-center">
                         <div className="flex items-center justify-center space-x-1">
@@ -556,6 +587,44 @@ export const PolizasView: React.FC<PolizasViewProps> = ({
                   </select>
                 </div>
               </div>
+
+              {/* Campos condicionales para Anulación (MOD-001) */}
+              {estado === 'Anulada' && (
+                <div className="bg-red-50 p-3.5 rounded-lg border border-red-200 space-y-3">
+                  <h4 className="font-bold text-red-800 text-xs uppercase tracking-wider">
+                    Registro de Anulación de Póliza (MOD-001)
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Fecha de Anulación *</label>
+                      <input
+                        type="date"
+                        value={fechaAnulacion}
+                        onChange={(e) => setFechaAnulacion(e.target.value)}
+                        min={vigDesde}
+                        max={vigHasta}
+                        className="w-full p-2 bg-white border border-red-300 rounded-lg font-mono text-slate-900 focus:ring-2 focus:ring-red-500"
+                        required
+                      />
+                      <span className="text-[10px] text-red-600 block mt-0.5">
+                        Debe ser estrictamente posterior a {vigDesde} y anterior a {vigHasta}.
+                      </span>
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Motivo de Anulación</label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Solicitud del asegurado / Venta de unidad / Falta de pago"
+                        value={motivoAnulacion}
+                        onChange={(e) => setMotivoAnulacion(e.target.value)}
+                        className="w-full p-2 bg-white border border-red-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-red-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>

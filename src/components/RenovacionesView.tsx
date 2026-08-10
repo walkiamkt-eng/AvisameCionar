@@ -1,18 +1,38 @@
-import React, { useState } from 'react';
-import { RenovacionItem } from '../types';
+import React, { useState, useEffect } from 'react';
+import { RenovacionItem, Poliza } from '../types';
 import { RefreshCw, Calculator, CheckCircle2, XCircle, Clock, ArrowRight, ShieldCheck, TrendingUp } from 'lucide-react';
 
 interface RenovacionesViewProps {
   renovaciones: RenovacionItem[];
+  polizas?: Poliza[];
   onUpdateEstadoRenovacion: (id: string, nuevoEstado: RenovacionItem['estadoRenovacion']) => void;
 }
 
 export const RenovacionesView: React.FC<RenovacionesViewProps> = ({
   renovaciones,
+  polizas = [],
   onUpdateEstadoRenovacion
 }) => {
-  const [selectedRenovacion, setSelectedRenovacion] = useState<RenovacionItem | null>(renovaciones[0] || null);
+  // Filtrar de renovaciones cualquier póliza que haya sido Anulada (MOD-001)
+  const renovacionesActivas = renovaciones.filter((r) => {
+    const polizaAsociada = polizas.find((p) => p.id === r.polizaId);
+    if (polizaAsociada && polizaAsociada.estado === 'Anulada') {
+      return false; // Las pólizas anuladas no deben aparecer para renovar
+    }
+    return true;
+  });
+
+  const [selectedRenovacion, setSelectedRenovacion] = useState<RenovacionItem | null>(renovacionesActivas[0] || null);
   const [factorInflacion, setFactorInflacion] = useState<number>(30); // 30% sugerido
+
+  // Garantizar que nunca quede seleccionada una renovación cuyo estado de póliza esté en "Anulada"
+  useEffect(() => {
+    if (!selectedRenovacion && renovacionesActivas.length > 0) {
+      setSelectedRenovacion(renovacionesActivas[0]);
+    } else if (selectedRenovacion && !renovacionesActivas.some((r) => r.id === selectedRenovacion.id)) {
+      setSelectedRenovacion(renovacionesActivas[0] || null);
+    }
+  }, [renovacionesActivas, selectedRenovacion]);
 
   const handleApplyInflationCalculator = () => {
     if (!selectedRenovacion) return;
@@ -44,12 +64,12 @@ export const RenovacionesView: React.FC<RenovacionesViewProps> = ({
         {/* Left: Pipeline List */}
         <div className="lg:col-span-7 bg-white rounded-xl border border-[#c7c7c7] shadow-xs p-5 space-y-4">
           <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-bold text-slate-900">Pipeline de Renovaciones Pendientes ({renovaciones.length})</h3>
+            <h3 className="text-sm font-bold text-slate-900">Pipeline de Renovaciones Pendientes ({renovacionesActivas.length})</h3>
             <span className="text-xs text-[#9e9e9e]">Vencimientos Próximos</span>
           </div>
 
           <div className="space-y-3">
-            {renovaciones.map((ren) => {
+            {renovacionesActivas.map((ren) => {
               const isSelected = selectedRenovacion?.id === ren.id;
 
               return (
