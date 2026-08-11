@@ -1,8 +1,64 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(productorId) {
+      return isSignedIn() && request.auth.uid == productorId;
+    }
+
+    function isDocOwner() {
+      return isSignedIn() && (
+        (resource == null || resource.data.productorId == request.auth.uid) &&
+        (request.resource == null || request.resource.data.productorId == request.auth.uid)
+      );
+    }
+
+    // Default deny
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
+    }
+
+    match /clientes/{clienteId} {
+      allow read, write: if isDocOwner();
+    }
+
+    match /aseguradoras/{aseguradoraId} {
+      allow read, write: if isDocOwner();
+    }
+
+    match /polizas/{polizaId} {
+      allow read, write: if isDocOwner();
+    }
+
+    match /vehiculos/{vehiculoId} {
+      allow read, write: if isDocOwner();
+    }
+
+    match /contratosArt/{contratoId} {
+      allow read, write: if isDocOwner();
+    }
+
+    match /reglas/{reglaId} {
+      allow read, write: if isDocOwner();
+    }
+
+    match /alertasTareas/{alertaId} {
+      allow read, write: if isDocOwner();
+    }
+
+    match /renovaciones/{renovacionId} {
+      allow read, write: if isDocOwner();
+    }
+
+    match /system_config/{configId} {
+      allow read, write: if isSignedIn() && (
+        configId == 'database_' + request.auth.uid ||
+        (resource != null && resource.data.productorId == request.auth.uid) ||
+        (request.resource != null && request.resource.data.productorId == request.auth.uid)
+      );
     }
   }
 }
