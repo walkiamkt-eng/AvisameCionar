@@ -6,7 +6,9 @@ import {
   Vehiculo,
   ContratoART,
   AlertaTarea,
-  RenovacionItem
+  RenovacionItem,
+  getRenovacionesPendientes,
+  getRenovacionesUnificadas
 } from '../types';
 import {
   LayoutDashboard,
@@ -52,10 +54,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const premioTotalMensual = polizasVigentes.reduce((acc, curr) => acc + curr.premioTotal, 0);
   const clientesActivosCount = clientes.filter((c) => c.estado === 'Activo').length;
   
-  const renovacionesPendientes = renovaciones.filter((r) => r.estadoRenovacion === 'Pendiente' || r.estadoRenovacion === 'En Negociación');
-  const renovacionesConcretadas = renovaciones.filter((r) => r.estadoRenovacion === 'Concretada').length;
-  const tasaRetencion = renovaciones.length > 0
-    ? Math.round((renovacionesConcretadas / renovaciones.length) * 100)
+  const renovacionesUnificadas = getRenovacionesUnificadas(polizas, renovaciones, clientes, aseguradoras);
+  const renovacionesPendientes = getRenovacionesPendientes(polizas, renovaciones, clientes, aseguradoras);
+  const renovacionesConcretadasCount = renovacionesUnificadas.filter((r) => r.estadoRenovacion === 'concretada').length;
+  const tasaRetencion = renovacionesUnificadas.length > 0
+    ? Math.round((renovacionesConcretadasCount / renovacionesUnificadas.length) * 100)
     : 100;
 
   const artElegiblesTraspaso = contratosArt.filter((a) => a.mesesPermanencia >= 12);
@@ -280,13 +283,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           <div className="p-4 space-y-3 flex-1 overflow-y-auto max-h-[380px]">
-            {renovaciones.length === 0 ? (
+            {renovacionesPendientes.length === 0 ? (
               <div className="text-center py-8 text-[#9e9e9e] text-xs">
                 <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
                 <p>No hay vencimientos ni renovaciones pendientes.</p>
               </div>
             ) : (
-              renovaciones.map((ren) => (
+              renovacionesPendientes.map((ren) => (
                 <div
                   key={ren.id}
                   className="p-3 bg-white border border-[#c7c7c7] rounded-lg space-y-2 hover:border-[#005a9e] transition-colors"
@@ -294,7 +297,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-900">{ren.clienteNombre}</span>
                     <span className="text-[10px] font-bold bg-[#005a9e]/10 text-[#005a9e] px-2 py-0.5 rounded">
-                      Vence en {ren.diasParaVencer} días
+                      {ren.diasParaVencer === 0 ? 'Vence hoy' : `Vence en ${ren.diasParaVencer} días`}
                     </span>
                   </div>
 
@@ -313,14 +316,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                   <div className="flex items-center justify-between text-[11px] pt-2 border-t border-slate-100">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      ren.estadoRenovacion === 'En Negociación' ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-700'
+                      ren.estadoRenovacion === 'en_negociacion'
+                        ? 'bg-amber-100 text-amber-900'
+                        : ren.estadoRenovacion === 'concretada'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : ren.estadoRenovacion === 'perdida_no_renueva'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-slate-100 text-slate-700'
                     }`}>
-                      Estado: {ren.estadoRenovacion}
+                      Estado: {ren.estadoRenovacion === 'en_negociacion' ? 'En Negociación' : ren.estadoRenovacion === 'concretada' ? 'Concretada' : ren.estadoRenovacion === 'perdida_no_renueva' ? 'Perdida / No Renueva' : 'Pendiente'}
                     </span>
 
                     <button
                       onClick={() => onNavigate('proceso-7')}
-                      className="text-[#007bc1] font-bold hover:underline flex items-center space-x-1"
+                      className="text-[#007bc1] font-bold hover:underline flex items-center space-x-1 cursor-pointer"
                     >
                       <span>Procesar Renovación</span>
                       <ArrowRight className="w-3.5 h-3.5" />

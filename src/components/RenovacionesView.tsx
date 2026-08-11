@@ -1,38 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { RenovacionItem, Poliza } from '../types';
-import { RefreshCw, Calculator, CheckCircle2, XCircle, Clock, ArrowRight, ShieldCheck, TrendingUp } from 'lucide-react';
+import {
+  RenovacionItem,
+  Poliza,
+  Cliente,
+  Aseguradora,
+  EstadoRenovacion,
+  getRenovacionesUnificadas,
+  getRenovacionesPendientes,
+  isEstadoGestionCerrado
+} from '../types';
+import { RefreshCw, Calculator, CheckCircle2, XCircle, Clock, ArrowRight, ShieldCheck, TrendingUp, AlertTriangle } from 'lucide-react';
 
 interface RenovacionesViewProps {
   renovaciones: RenovacionItem[];
   polizas?: Poliza[];
-  onUpdateEstadoRenovacion: (id: string, nuevoEstado: RenovacionItem['estadoRenovacion']) => void;
+  clientes?: Cliente[];
+  aseguradoras?: Aseguradora[];
+  onUpdateEstadoRenovacion: (id: string, nuevoEstado: EstadoRenovacion) => void;
 }
 
 export const RenovacionesView: React.FC<RenovacionesViewProps> = ({
   renovaciones,
   polizas = [],
+  clientes = [],
+  aseguradoras = [],
   onUpdateEstadoRenovacion
 }) => {
-  // Filtrar de renovaciones cualquier póliza que haya sido Anulada (MOD-001)
-  const renovacionesActivas = renovaciones.filter((r) => {
-    const polizaAsociada = polizas.find((p) => p.id === r.polizaId);
-    if (polizaAsociada && polizaAsociada.estado === 'Anulada') {
-      return false; // Las pólizas anuladas no deben aparecer para renovar
-    }
-    return true;
-  });
+  const [activeTab, setActiveTab] = useState<'pendientes' | 'todas'>('pendientes');
 
-  const [selectedRenovacion, setSelectedRenovacion] = useState<RenovacionItem | null>(renovacionesActivas[0] || null);
-  const [factorInflacion, setFactorInflacion] = useState<number>(30); // 30% sugerido
+  // Fuente de verdad unificada
+  const renovacionesUnificadas = getRenovacionesUnificadas(polizas, renovaciones, clientes, aseguradoras);
+  const renovacionesPendientes = getRenovacionesPendientes(polizas, renovaciones, clientes, aseguradoras);
 
-  // Garantizar que nunca quede seleccionada una renovación cuyo estado de póliza esté en "Anulada"
+  const listaAMostrar = activeTab === 'pendientes' ? renovacionesPendientes : renovacionesUnificadas;
+
+  const [selectedRenovacion, setSelectedRenovacion] = useState<RenovacionItem | null>(listaAMostrar[0] || null);
+  const [factorInflacion, setFactorInflacion] = useState<number>(30);
+
   useEffect(() => {
-    if (!selectedRenovacion && renovacionesActivas.length > 0) {
-      setSelectedRenovacion(renovacionesActivas[0]);
-    } else if (selectedRenovacion && !renovacionesActivas.some((r) => r.id === selectedRenovacion.id)) {
-      setSelectedRenovacion(renovacionesActivas[0] || null);
+    if (!selectedRenovacion && listaAMostrar.length > 0) {
+      setSelectedRenovacion(listaAMostrar[0]);
+    } else if (selectedRenovacion && !listaAMostrar.some((r) => r.id === selectedRenovacion.id)) {
+      setSelectedRenovacion(listaAMostrar[0] || null);
     }
-  }, [renovacionesActivas, selectedRenovacion]);
+  }, [listaAMostrar, selectedRenovacion]);
 
   const handleApplyInflationCalculator = () => {
     if (!selectedRenovacion) return;
@@ -40,6 +51,32 @@ export const RenovacionesView: React.FC<RenovacionesViewProps> = ({
     selectedRenovacion.sumaSugeridaInflacion = Math.round(selectedRenovacion.sumaAseguradaActual * factor);
     selectedRenovacion.premioNuevaPropuesta = Math.round(selectedRenovacion.premioActual * factor);
     alert(`Cálculo de Infraseguro aplicado (+${factorInflacion}%). Nueva Suma Sugerida: $${selectedRenovacion.sumaSugeridaInflacion.toLocaleString('es-AR')} ARS`);
+  };
+
+  const handleMarcarPerdidaNoRenueva = (ren: RenovacionItem) => {
+    const confirmacion = window.confirm(
+      `¿Confirma marcar esta renovación como "Póliza perdida / Cliente no renueva"?\n\n` +
+      `Cliente: ${ren.clienteNombre}\n` +
+      `Póliza/Ramo: ${ren.ramo} (${ren.aseguradoraNombre})\n\n` +
+      `Esta acción registrará el cierre en el historial. La póliza y el cliente NO serán eliminados ni modificados.`
+    );
+    if (confirmacion) {
+      onUpdateEstadoRenovacion(ren.id, 'perdida_no_renueva');
+    }
+  };
+
+  const renderBadgeEstado = (estado: EstadoRenovacion) => {
+    switch (estado) {
+      case 'concretada':
+        return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Concretada</span>;
+      case 'en_negociacion':
+        return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">En Negociación</span>;
+      case 'perdida_no_renueva':
+        return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-800">Perdida / No Renueva</span>;
+      case 'pendiente':
+      default:
+        return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">Pendiente</span>;
+    }
   };
 
   return (
@@ -56,6 +93,30 @@ export const RenovacionesView: React.FC<RenovacionesViewProps> = ({
             Gestión comercial de vencimientos, negociación de primas y prevención de infraseguro por inflación.
           </p>
         </div>
+
+        {/* Tab Filters */}
+        <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+          <button
+            onClick={() => setActiveTab('pendientes')}
+            className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${
+              activeTab === 'pendientes'
+                ? 'bg-white text-[#005a9e] shadow-xs'
+                : 'text-[#6d6e71] hover:text-slate-900'
+            }`}
+          >
+            Pendientes ({renovacionesPendientes.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('todas')}
+            className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${
+              activeTab === 'todas'
+                ? 'bg-white text-[#005a9e] shadow-xs'
+                : 'text-[#6d6e71] hover:text-slate-900'
+            }`}
+          >
+            Todas / Histórico ({renovacionesUnificadas.length})
+          </button>
+        </div>
       </div>
 
       {/* Main Grid Layout */}
@@ -64,81 +125,97 @@ export const RenovacionesView: React.FC<RenovacionesViewProps> = ({
         {/* Left: Pipeline List */}
         <div className="lg:col-span-7 bg-white rounded-xl border border-[#c7c7c7] shadow-xs p-5 space-y-4">
           <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-bold text-slate-900">Pipeline de Renovaciones Pendientes ({renovacionesActivas.length})</h3>
+            <h3 className="text-sm font-bold text-slate-900">
+              {activeTab === 'pendientes' ? 'Pipeline de Renovaciones Pendientes' : 'Historial Unificado de Renovaciones'} ({listaAMostrar.length})
+            </h3>
             <span className="text-xs text-[#9e9e9e]">Vencimientos Próximos</span>
           </div>
 
           <div className="space-y-3">
-            {renovacionesActivas.map((ren) => {
-              const isSelected = selectedRenovacion?.id === ren.id;
+            {listaAMostrar.length === 0 ? (
+              <div className="text-center py-10 text-[#9e9e9e] text-xs space-y-2">
+                <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+                <p>No hay renovaciones registradas en este estado.</p>
+              </div>
+            ) : (
+              listaAMostrar.map((ren) => {
+                const isSelected = selectedRenovacion?.id === ren.id;
 
-              return (
-                <div
-                  key={ren.id}
-                  onClick={() => setSelectedRenovacion(ren)}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer space-y-2 ${
-                    isSelected
-                      ? 'bg-[#005a9e]/5 border-[#005a9e] ring-1 ring-[#005a9e]'
-                      : 'bg-white border-[#c7c7c7] hover:border-[#007bc1]'
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="text-[10px] font-bold bg-[#005a9e] text-white px-2 py-0.5 rounded">
-                        Vence en {ren.diasParaVencer} días
-                      </span>
-                      <h4 className="text-sm font-bold text-slate-900 mt-1">{ren.clienteNombre}</h4>
-                      <p className="text-xs text-[#6d6e71]">CUIT: {ren.clienteCuit} · {ren.ramo} ({ren.aseguradoraNombre})</p>
+                return (
+                  <div
+                    key={ren.id}
+                    onClick={() => setSelectedRenovacion(ren)}
+                    className={`p-4 rounded-xl border transition-all cursor-pointer space-y-2 ${
+                      isSelected
+                        ? 'bg-[#005a9e]/5 border-[#005a9e] ring-1 ring-[#005a9e]'
+                        : 'bg-white border-[#c7c7c7] hover:border-[#007bc1]'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                          ren.diasParaVencer <= 7 ? 'bg-red-600 text-white' : 'bg-[#005a9e] text-white'
+                        }`}>
+                          {ren.diasParaVencer < 0
+                            ? `Venció hace ${Math.abs(ren.diasParaVencer)} días`
+                            : ren.diasParaVencer === 0
+                            ? 'Vence hoy'
+                            : `Vence en ${ren.diasParaVencer} días`}
+                        </span>
+                        <h4 className="text-sm font-bold text-slate-900 mt-1">{ren.clienteNombre}</h4>
+                        <p className="text-xs text-[#6d6e71]">CUIT: {ren.clienteCuit} · {ren.ramo} ({ren.aseguradoraNombre})</p>
+                      </div>
+
+                      {renderBadgeEstado(ren.estadoRenovacion)}
                     </div>
 
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      ren.estadoRenovacion === 'Concretada'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : ren.estadoRenovacion === 'En Negociación'
-                        ? 'bg-amber-100 text-amber-900'
-                        : ren.estadoRenovacion === 'Rechazada'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-slate-100 text-slate-700'
-                    }`}>
-                      {ren.estadoRenovacion}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                    <div>
-                      <span className="text-[#9e9e9e] text-[10px] block">Premio Actual</span>
-                      <span className="font-mono text-slate-800">${ren.premioActual.toLocaleString('es-AR')} ARS</span>
+                    <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                      <div>
+                        <span className="text-[#9e9e9e] text-[10px] block">Premio Actual</span>
+                        <span className="font-mono text-slate-800">${ren.premioActual.toLocaleString('es-AR')} ARS</span>
+                      </div>
+                      <div>
+                        <span className="text-[#9e9e9e] text-[10px] block">Propuesta Renovación</span>
+                        <span className="font-mono font-bold text-[#005a9e]">${ren.premioNuevaPropuesta.toLocaleString('es-AR')} ARS</span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-[#9e9e9e] text-[10px] block">Propuesta Renovación</span>
-                      <span className="font-mono font-bold text-[#005a9e]">${ren.premioNuevaPropuesta.toLocaleString('es-AR')} ARS</span>
-                    </div>
-                  </div>
 
-                  {/* Actions Bar */}
-                  <div className="pt-2 flex items-center justify-end space-x-2 text-xs">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onUpdateEstadoRenovacion(ren.id, 'En Negociación');
-                      }}
-                      className="px-2.5 py-1 bg-amber-100 text-amber-900 font-bold rounded hover:bg-amber-200"
-                    >
-                      En Negociación
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onUpdateEstadoRenovacion(ren.id, 'Concretada');
-                      }}
-                      className="px-2.5 py-1 bg-emerald-600 text-white font-bold rounded hover:bg-emerald-700"
-                    >
-                      Concretar Renovación
-                    </button>
+                    {/* Actions Bar */}
+                    {!isEstadoGestionCerrado(ren.estadoRenovacion) && (
+                      <div className="pt-2 flex flex-wrap items-center justify-end gap-2 text-xs">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onUpdateEstadoRenovacion(ren.id, 'en_negociacion');
+                          }}
+                          className="px-2.5 py-1 bg-amber-100 text-amber-900 font-bold rounded hover:bg-amber-200 transition-colors cursor-pointer"
+                        >
+                          En Negociación
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onUpdateEstadoRenovacion(ren.id, 'concretada');
+                          }}
+                          className="px-2.5 py-1 bg-emerald-600 text-white font-bold rounded hover:bg-emerald-700 transition-colors cursor-pointer"
+                        >
+                          Concretar Renovación
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMarcarPerdidaNoRenueva(ren);
+                          }}
+                          className="px-2.5 py-1 bg-red-100 text-red-800 font-bold rounded hover:bg-red-200 transition-colors cursor-pointer"
+                        >
+                          Póliza perdida / Cliente no renueva
+                        </button>
+                      </div>
+                    )}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -168,7 +245,7 @@ export const RenovacionesView: React.FC<RenovacionesViewProps> = ({
                   />
                   <button
                     onClick={handleApplyInflationCalculator}
-                    className="bg-[#005a9e] text-white px-3 py-2 rounded-lg font-bold flex-shrink-0"
+                    className="bg-[#005a9e] text-white px-3 py-2 rounded-lg font-bold flex-shrink-0 cursor-pointer"
                   >
                     Recalcular
                   </button>

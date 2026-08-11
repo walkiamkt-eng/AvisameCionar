@@ -7,7 +7,10 @@ import {
   ContratoART,
   ReglaAutomatizacion,
   AlertaTarea,
-  RenovacionItem
+  RenovacionItem,
+  EstadoRenovacion,
+  getRenovacionesUnificadas,
+  isEstadoGestionCerrado
 } from './types';
 import {
   INITIAL_CLIENTES,
@@ -237,35 +240,6 @@ function MainAppContent() {
     const polizaCompleta: Poliza = { ...nueva, id, productorId };
     setPolizas((prev) => [polizaCompleta, ...prev]);
     await saveDocument('polizas', polizaCompleta, productorId);
-
-    // Check if near expiration to add to renovation pipeline (Process 7)
-    const hastaDate = new Date(nueva.vigenciaHasta);
-    const today = new Date();
-    const diffDays = Math.ceil((hastaDate.getTime() - today.getTime()) / (1000 * 3600 * 24));
-
-    if (diffDays <= 60) {
-      const cliente = clientes.find((c) => c.id === nueva.clienteId);
-      const aseguradora = aseguradoras.find((a) => a.id === nueva.aseguradoraId);
-      const nuevaRenovacion: RenovacionItem = {
-        id: `ren-${Date.now()}`,
-        productorId,
-        polizaId: id,
-        clienteNombre: cliente?.nombreRazonSocial || 'Cliente',
-        clienteCuit: cliente?.cuitCuilDni || '',
-        aseguradoraNombre: aseguradora?.nombre || 'Compañía',
-        ramo: nueva.ramo,
-        vigenciaHasta: nueva.vigenciaHasta,
-        diasParaVencer: diffDays > 0 ? diffDays : 0,
-        sumaAseguradaActual: nueva.sumaAsegurada,
-        sumaSugeridaInflacion: Math.round(nueva.sumaAsegurada * 1.3),
-        premioActual: nueva.premioTotal,
-        premioNuevaPropuesta: Math.round(nueva.premioTotal * 1.3),
-        estadoRenovacion: 'Pendiente',
-        siniestralidad: 'Sin Siniestros'
-      };
-      setRenovaciones((prev) => [nuevaRenovacion, ...prev]);
-      await saveDocument('renovaciones', nuevaRenovacion, productorId);
-    }
   };
 
   const handleUpdatePoliza = async (polizaActualizada: Poliza) => {
@@ -368,16 +342,38 @@ function MainAppContent() {
 
   const handleUpdateEstadoRenovacion = async (
     renovacionId: string,
-    nuevoEstado: RenovacionItem['estadoRenovacion']
+    nuevoEstado: EstadoRenovacion
   ) => {
-    const ren = renovaciones.find((r) => r.id === renovacionId);
-    if (ren) {
-      const updatedRen: RenovacionItem = { ...ren, estadoRenovacion: nuevoEstado, productorId };
-      setRenovaciones((prev) =>
-        prev.map((r) => (r.id === renovacionId ? updatedRen : r))
-      );
-      await saveDocument('renovaciones', updatedRen, productorId);
-    }
+    const unificadas = getRenovacionesUnificadas(polizas, renovaciones, clientes, aseguradoras);
+    const itemTarget = unificadas.find((r) => r.id === renovacionId);
+    if (!itemTarget) return;
+
+    const isVirtual = renovacionId.startsWith('renovacion-virtual-');
+    const docId = isVirtual ? `ren-${itemTarget.polizaId}` : renovacionId;
+
+    const fechaCierre = isEstadoGestionCerrado(nuevoEstado)
+      ? new Date().toISOString().split('T')[0]
+      : itemTarget.fechaCierreGestion;
+
+    const updatedRen: RenovacionItem = {
+      ...itemTarget,
+      id: docId,
+      estadoRenovacion: nuevoEstado,
+      fechaCierreGestion: fechaCierre,
+      productorId
+    };
+
+    setRenovaciones((prev) => {
+      const existingIndex = prev.findIndex((r) => r.id === docId || r.polizaId === itemTarget.polizaId);
+      if (existingIndex >= 0) {
+        const copy = [...prev];
+        copy[existingIndex] = updatedRen;
+        return copy;
+      }
+      return [updatedRen, ...prev];
+    });
+
+    await saveDocument('renovaciones', updatedRen, productorId);
   };
 
   const pendingTasksCount = alertasTareas.filter((a) => a.estado === 'Pendiente').length;
@@ -484,6 +480,8 @@ function MainAppContent() {
             <RenovacionesView
               renovaciones={renovaciones}
               polizas={polizas}
+              clientes={clientes}
+              aseguradoras={aseguradoras}
               onUpdateEstadoRenovacion={handleUpdateEstadoRenovacion}
             />
           )}
