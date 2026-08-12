@@ -393,7 +393,7 @@ function MainAppContent() {
       />
 
       {/* Main Workspace Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col md:flex-row gap-6">
+      <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 flex flex-col md:flex-row gap-6">
         
         {/* Left Navigation Sidebar */}
         <Sidebar
@@ -497,7 +497,7 @@ function MainAppContent() {
 
       {/* Footer */}
       <footer className="bg-white border-t border-[#c7c7c7] py-4 text-center text-xs text-[#6d6e71]">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="w-full px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center space-x-2">
             <span className="font-bold text-[#005a9e]">AVISAME · cionar.com.ar</span>
             <span className="hidden sm:inline text-slate-300">|</span>

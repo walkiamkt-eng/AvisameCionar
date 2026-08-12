@@ -40,7 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="bg-[#005a9e] text-white border-b border-[#007bc1] sticky top-0 z-30 shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
         {/* Brand Logo */}
         <div className="flex items-center space-x-3">
