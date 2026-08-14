@@ -20,6 +20,11 @@ export interface Cliente {
   notas?: string;
 }
 
+export interface ComisionRamo {
+  ramo: RamoSeguro;
+  porcentaje: number; // Porcentaje que paga la aseguradora al productor para ese ramo
+}
+
 export interface Aseguradora {
   id: string;
   productorId?: string;
@@ -31,8 +36,12 @@ export interface Aseguradora {
   estadoSsn: 'Habilitada' | 'Inhabilitada' | 'Bajo Observación';
   telefonoSoporte: string;
   emailSuscripcion: string;
-  comisionPromedio: number; // porcentaje
-  estado: 'Activa' | 'Suspendida';
+  comisionPromedio?: number; // Porcentaje promedio o histórico mantenido para retrocompatibilidad
+  estado: 'Habilitada' | 'Inhabilitada' | 'Activa' | 'Suspendida';
+  linkAcceso?: string;
+  usuarioAcceso?: string;
+  claveAcceso?: string;
+  comisionesPorRamo?: ComisionRamo[];
 }
 
 export type RamoSeguro = 
@@ -51,6 +60,24 @@ export type RamoSeguro =
   | 'Transporte de Mercaderías'
   | 'Robo y Riesgos Similares'
   | 'Salud / Sepelio';
+
+export const LISTA_RAMOS_SEGURO: RamoSeguro[] = [
+  'Automotores',
+  'Combinado Familiar',
+  'Integral de Comercio',
+  'Integral de Consorcio',
+  'Incendio',
+  'Responsabilidad Civil',
+  'Accidentes Personales',
+  'Vida',
+  'Riesgos del Trabajo (ART)',
+  'Caución',
+  'Agro',
+  'Seguro Técnico',
+  'Transporte de Mercaderías',
+  'Robo y Riesgos Similares',
+  'Salud / Sepelio'
+];
 
 export interface EndosoItem {
   id: string;

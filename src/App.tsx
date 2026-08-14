@@ -235,6 +235,14 @@ function MainAppContent() {
     await saveDocument('aseguradoras', aseguradoraCompleta, productorId);
   };
 
+  const handleUpdateAseguradora = async (aseguradoraActualizada: Aseguradora) => {
+    const aseguradoraCompleta: Aseguradora = { ...aseguradoraActualizada, productorId };
+    setAseguradoras((prev) =>
+      prev.map((a) => (a.id === aseguradoraActualizada.id ? aseguradoraCompleta : a))
+    );
+    await saveDocument('aseguradoras', aseguradoraCompleta, productorId);
+  };
+
   const handleAddPoliza = async (nueva: Omit<Poliza, 'id'>) => {
     const id = `pol-${Date.now()}`;
     const polizaCompleta: Poliza = { ...nueva, id, productorId };
@@ -436,6 +444,7 @@ function MainAppContent() {
             <AseguradorasView
               aseguradoras={aseguradoras}
               onAddAseguradora={handleAddAseguradora}
+              onUpdateAseguradora={handleUpdateAseguradora}
             />
           )}
 

@@ -102,7 +102,18 @@ export const INITIAL_ASEGURADORAS: Aseguradora[] = [
     telefonoSoporte: '0810-222-7800',
     emailSuscripcion: 'emision@fedpat.com.ar',
     comisionPromedio: 18.5,
-    estado: 'Activa'
+    estado: 'Habilitada',
+    linkAcceso: 'https://portal.fedpat.com.ar/pas',
+    usuarioAcceso: 'PAS88412',
+    claveAcceso: 'FedPat#2026',
+    comisionesPorRamo: [
+      { ramo: 'Automotores', porcentaje: 20 },
+      { ramo: 'Combinado Familiar', porcentaje: 22 },
+      { ramo: 'Integral de Comercio', porcentaje: 18 },
+      { ramo: 'Incendio', porcentaje: 25 },
+      { ramo: 'Responsabilidad Civil', porcentaje: 18 },
+      { ramo: 'Agro', porcentaje: 15 }
+    ]
   },
   {
     id: 'aseg-2',
@@ -114,7 +125,17 @@ export const INITIAL_ASEGURADORAS: Aseguradora[] = [
     telefonoSoporte: '0810-222-8888',
     emailSuscripcion: 'suscripcion@sancristobal.com.ar',
     comisionPromedio: 17.0,
-    estado: 'Activa'
+    estado: 'Habilitada',
+    linkAcceso: 'https://productores.sancristobal.com.ar',
+    usuarioAcceso: 'PAS43920',
+    claveAcceso: 'SanCris@2026',
+    comisionesPorRamo: [
+      { ramo: 'Automotores', porcentaje: 18 },
+      { ramo: 'Combinado Familiar', porcentaje: 20 },
+      { ramo: 'Responsabilidad Civil', porcentaje: 17 },
+      { ramo: 'Incendio', porcentaje: 22 },
+      { ramo: 'Caución', porcentaje: 15 }
+    ]
   },
   {
     id: 'aseg-3',
@@ -126,7 +147,17 @@ export const INITIAL_ASEGURADORAS: Aseguradora[] = [
     telefonoSoporte: '0800-444-5222',
     emailSuscripcion: 'produccion@lasegunda.com.ar',
     comisionPromedio: 19.0,
-    estado: 'Activa'
+    estado: 'Habilitada',
+    linkAcceso: 'https://netpas.lasegunda.com.ar',
+    usuarioAcceso: 'PAS12093',
+    claveAcceso: 'LaSegunda#89',
+    comisionesPorRamo: [
+      { ramo: 'Automotores', porcentaje: 19 },
+      { ramo: 'Agro', porcentaje: 16 },
+      { ramo: 'Vida', porcentaje: 25 },
+      { ramo: 'Combinado Familiar', porcentaje: 22 },
+      { ramo: 'Transporte de Mercaderías', porcentaje: 15 }
+    ]
   },
   {
     id: 'aseg-4',
@@ -138,7 +169,13 @@ export const INITIAL_ASEGURADORAS: Aseguradora[] = [
     telefonoSoporte: '0800-888-0278',
     emailSuscripcion: 'comercial@experta.com.ar',
     comisionPromedio: 8.5,
-    estado: 'Activa'
+    estado: 'Habilitada',
+    linkAcceso: 'https://autogestion.experta.com.ar',
+    usuarioAcceso: 'PAS77312',
+    claveAcceso: 'Experta$2026',
+    comisionesPorRamo: [
+      { ramo: 'Riesgos del Trabajo (ART)', porcentaje: 8.5 }
+    ]
   },
   {
     id: 'aseg-5',
@@ -150,7 +187,18 @@ export const INITIAL_ASEGURADORAS: Aseguradora[] = [
     telefonoSoporte: '0800-333-9874',
     emailSuscripcion: 'agentes@zurich.com.ar',
     comisionPromedio: 20.0,
-    estado: 'Activa'
+    estado: 'Habilitada',
+    linkAcceso: 'https://portalagentes.zurich.com.ar',
+    usuarioAcceso: 'PAS30911',
+    claveAcceso: 'Zurich!Pass26',
+    comisionesPorRamo: [
+      { ramo: 'Automotores', porcentaje: 20 },
+      { ramo: 'Integral de Comercio', porcentaje: 22 },
+      { ramo: 'Integral de Consorcio', porcentaje: 20 },
+      { ramo: 'Caución', porcentaje: 18 },
+      { ramo: 'Vida', porcentaje: 28 },
+      { ramo: 'Responsabilidad Civil', porcentaje: 20 }
+    ]
   }
 ];
 
@@ -492,7 +540,7 @@ export const INITIAL_RENOVACIONES: RenovacionItem[] = [
     sumaSugeridaInflacion: 24000000,
     premioActual: 72000,
     premioNuevaPropuesta: 94000,
-    estadoRenovacion: 'En Negociación',
+    estadoRenovacion: 'en_negociacion',
     siniestralidad: 'Sin Siniestros'
   },
   {
@@ -508,7 +556,7 @@ export const INITIAL_RENOVACIONES: RenovacionItem[] = [
     sumaSugeridaInflacion: 145000000,
     premioActual: 128000,
     premioNuevaPropuesta: 165000,
-    estadoRenovacion: 'Pendiente',
+    estadoRenovacion: 'pendiente',
     siniestralidad: 'Baja'
   },
   {
@@ -524,7 +572,7 @@ export const INITIAL_RENOVACIONES: RenovacionItem[] = [
     sumaSugeridaInflacion: 110000000,
     premioActual: 38000,
     premioNuevaPropuesta: 49000,
-    estadoRenovacion: 'Pendiente',
+    estadoRenovacion: 'pendiente',
     siniestralidad: 'Sin Siniestros'
   }
 ];
