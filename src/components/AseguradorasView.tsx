@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Aseguradora, ComisionRamo, RamoSeguro, LISTA_RAMOS_SEGURO } from '../types';
 import {
   Building2,
@@ -47,7 +47,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
   const [codigoOrganizador, setCodigoOrganizador] = useState('');
   const [telefonoSoporte, setTelefonoSoporte] = useState('');
   const [emailSuscripcion, setEmailSuscripcion] = useState('');
-  const [estadoSsn, setEstadoSsn] = useState<'Habilitada' | 'Inhabilitada' | 'Bajo ObservaciÃ³n'>('Habilitada');
+  const [estadoSsn, setEstadoSsn] = useState<'Habilitada' | 'Inhabilitada' | 'Bajo Observación'>('Habilitada');
   const [estado, setEstado] = useState<'Habilitada' | 'Inhabilitada'>('Habilitada');
 
   // Access Data State (MOD-005)
@@ -167,12 +167,12 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
   const handleAddComisionRamo = () => {
     if (!selectedRamoToAdd) return;
     if (comisionesPorRamo.some((c) => c.ramo === selectedRamoToAdd)) {
-      alert(`El ramo "${selectedRamoToAdd}" ya tiene una comisiÃ³n configurada para esta aseguradora.`);
+      alert(`El ramo "${selectedRamoToAdd}" ya tiene una comisión configurada para esta aseguradora.`);
       return;
     }
     const pct = Number(porcentajeToAdd);
     if (isNaN(pct) || pct < 0 || pct > 100) {
-      alert('Por favor ingrese un porcentaje de comisiÃ³n vÃ¡lido entre 0% y 100%.');
+      alert('Por favor ingrese un porcentaje de comisión válido entre 0% y 100%.');
       return;
     }
 
@@ -200,8 +200,8 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
   const handleToggleInhabilitacion = (aseg: Aseguradora) => {
     const isCurrentlyHab = isAseguradoraHabilitada(aseg);
     const confirmMsg = isCurrentlyHab
-      ? `Â¿Desea inhabilitar la aseguradora "${aseg.nombre}"?\n\nLa compaÃ±Ã­a conservarÃ¡ todos sus datos, accesos, comisiones e historial, pero figurarÃ¡ inhabilitada para nuevas operaciones.`
-      : `Â¿Desea rehabilitar la aseguradora "${aseg.nombre}"?\n\nLa compaÃ±Ã­a volverÃ¡ a estar disponible con todos sus datos y comisiones configuradas.`;
+      ? `¿Desea inhabilitar la aseguradora "${aseg.nombre}"?\n\nLa compañía conservará todos sus datos, accesos, comisiones e historial, pero figurará inhabilitada para nuevas operaciones.`
+      : `¿Desea rehabilitar la aseguradora "${aseg.nombre}"?\n\nLa compañía volverá a estar disponible con todos sus datos y comisiones configuradas.`;
 
     if (!window.confirm(confirmMsg)) return;
 
@@ -217,7 +217,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombre.trim() || !codigoProductor.trim()) {
-      alert('Nombre y CÃ³digo de Productor son requeridos.');
+      alert('Nombre y Código de Productor son requeridos.');
       return;
     }
 
@@ -278,10 +278,10 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
         <div>
           <div className="flex items-center space-x-2">
             <Building2 className="w-5 h-5 text-[#005a9e]" />
-            <h2 className="text-lg font-bold text-slate-900">Proceso 2 Â· AdministraciÃ³n de Aseguradoras</h2>
+            <h2 className="text-lg font-bold text-slate-900">Proceso 2 · Administración de Aseguradoras</h2>
           </div>
           <p className="text-xs text-[#6d6e71] mt-0.5">
-            GestiÃ³n de CompaÃ±Ã­as de Seguros, Datos de Acceso al Portal PAS y Comisiones por Ramo.
+            Gestión de Compañías de Seguros, Datos de Acceso al Portal PAS y Comisiones por Ramo.
           </p>
         </div>
 
@@ -302,7 +302,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
           <Search className="w-4 h-4 text-[#9e9e9e] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Buscar aseguradora por nombre, CUIT o cÃ³digo PAS..."
+            placeholder="Buscar aseguradora por nombre, CUIT o código PAS..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-[#c7c7c7] rounded-lg text-xs focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#005a9e]"
@@ -351,7 +351,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
           <h3 className="text-sm font-bold text-slate-800">No se encontraron aseguradoras</h3>
           <p className="text-xs text-[#6d6e71]">
             {searchTerm
-              ? 'No hay compaÃ±Ã­as que coincidan con los criterios de bÃºsqueda.'
+              ? 'No hay compañías que coincidan con los criterios de búsqueda.'
               : 'No hay aseguradoras en este estado.'}
           </p>
         </div>
@@ -409,19 +409,19 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                     {/* Producer & Organizer Codes */}
                     <div className="bg-slate-50 p-2.5 rounded-lg border border-[#c7c7c7] grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <span className="text-[10px] text-[#6d6e71] block">CÃ³digo PAS:</span>
+                        <span className="text-[10px] text-[#6d6e71] block">Código PAS:</span>
                         <span className="font-bold text-slate-900 font-mono text-xs">{aseg.codigoProductor}</span>
                       </div>
                       <div>
                         <span className="text-[10px] text-[#6d6e71] block">Organizador:</span>
                         <span className="font-bold text-slate-900 font-mono text-xs">
-                          {aseg.codigoOrganizador || 'â€”'}
+                          {aseg.codigoOrganizador || '—'}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Acceso al Sistema de la CompaÃ±Ã­a (MOD-005) */}
+                  {/* Acceso al Sistema de la Compañía (MOD-005) */}
                   <div className="bg-blue-50/40 p-3 rounded-lg border border-blue-100 space-y-2 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold text-[#005a9e] uppercase tracking-wider flex items-center space-x-1">
@@ -435,7 +435,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[10px] text-[#005a9e] hover:text-[#007bc1] font-bold flex items-center space-x-0.5 hover:underline"
-                          title="Abrir portal en nueva pestaÃ±a"
+                          title="Abrir portal en nueva pestaña"
                         >
                           <span>Ir al Portal</span>
                           <ExternalLink className="w-3 h-3 ml-0.5" />
@@ -472,7 +472,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                           <span className="text-[11px] text-[#6d6e71]">Clave:</span>
                           <span className="font-mono font-bold text-slate-900 text-[11px] truncate">
                             {aseg.claveAcceso
-                              ? (isPwVisible ? aseg.claveAcceso : 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢')
+                              ? (isPwVisible ? aseg.claveAcceso : '••••••••••••')
                               : 'No configurada'}
                           </span>
                         </div>
@@ -505,7 +505,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold text-[#6d6e71] uppercase tracking-wider flex items-center space-x-1">
                         <Percent className="w-3 h-3 text-[#005a9e]" />
-                        <span>ComisiÃ³n que Paga por Ramo</span>
+                        <span>Comisión que Paga por Ramo</span>
                       </span>
                       <span className="text-[9px] text-[#9e9e9e]">
                         {comisiones.length} {comisiones.length === 1 ? 'ramo' : 'ramos'}
@@ -530,7 +530,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                       <div className="bg-amber-50/60 p-2 rounded border border-amber-200 text-[11px] text-amber-800">
                         <span>Sin comisiones por ramo detalladas.</span>
                         {aseg.comisionPromedio !== undefined && (
-                          <span className="font-bold ml-1">ComisiÃ³n Base: {aseg.comisionPromedio}%</span>
+                          <span className="font-bold ml-1">Comisión Base: {aseg.comisionPromedio}%</span>
                         )}
                       </div>
                     )}
@@ -593,7 +593,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
         </div>
       )}
 
-      {/* Modal Alta / EdiciÃ³n de Aseguradora */}
+      {/* Modal Alta / Edición de Aseguradora */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-xl border border-[#c7c7c7] shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] flex flex-col">
@@ -610,24 +610,24 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                 onClick={() => setShowModal(false)}
                 className="text-[#9e9e9e] hover:text-slate-900 font-bold text-lg cursor-pointer p-1"
               >
-                âœ•
+                ✕
               </button>
             </div>
 
             {/* Modal Body / Form */}
             <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto pr-1 flex-1 text-xs">
 
-              {/* SecciÃ³n 1: Datos Principales */}
+              {/* Sección 1: Datos Principales */}
               <div className="space-y-3">
                 <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#005a9e] border-b border-slate-100 pb-1">
-                  1. Datos Generales de la CompaÃ±Ã­a
+                  1. Datos Generales de la Compañía
                 </h4>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Nombre o RazÃ³n Social *</label>
+                  <label className="font-bold text-slate-700 block mb-1">Nombre o Razón Social *</label>
                   <input
                     type="text"
-                    placeholder="Ej: Mapfre Seguros, San CristÃ³bal Seguros, etc."
+                    placeholder="Ej: Mapfre Seguros, San Cristóbal Seguros, etc."
                     value={nombre}
                     onChange={(e) => setNombre(e.target.value)}
                     className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#005a9e]"
@@ -637,7 +637,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">CUIT CompaÃ±Ã­a</label>
+                    <label className="font-bold text-slate-700 block mb-1">CUIT Compañía</label>
                     <input
                       type="text"
                       placeholder="30-50000000-1"
@@ -648,7 +648,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                   </div>
 
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">CÃ³digo Productor (PAS) *</label>
+                    <label className="font-bold text-slate-700 block mb-1">Código Productor (PAS) *</label>
                     <input
                       type="text"
                       placeholder="PAS-12345"
@@ -660,7 +660,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                   </div>
 
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">CÃ³digo Organizador</label>
+                    <label className="font-bold text-slate-700 block mb-1">Código Organizador</label>
                     <input
                       type="text"
                       placeholder="ORG-99"
@@ -673,7 +673,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">TelÃ©fono Soporte EmisiÃ³n</label>
+                    <label className="font-bold text-slate-700 block mb-1">Teléfono Soporte Emisión</label>
                     <input
                       type="text"
                       placeholder="0810-000-1234"
@@ -684,7 +684,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                   </div>
 
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Email SuscripciÃ³n / Comercial</label>
+                    <label className="font-bold text-slate-700 block mb-1">Email Suscripción / Comercial</label>
                     <input
                       type="email"
                       placeholder="emision@aseguradora.com.ar"
@@ -704,7 +704,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                       className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg"
                     >
                       <option value="Habilitada">Habilitada por SSN</option>
-                      <option value="Bajo ObservaciÃ³n">Bajo ObservaciÃ³n</option>
+                      <option value="Bajo Observación">Bajo Observación</option>
                       <option value="Inhabilitada">Inhabilitada por SSN</option>
                     </select>
                   </div>
@@ -723,7 +723,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                 </div>
               </div>
 
-              {/* SecciÃ³n 2: Datos de Acceso al Sistema de la Aseguradora (MOD-005) */}
+              {/* Sección 2: Datos de Acceso al Sistema de la Aseguradora (MOD-005) */}
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-1">
                   <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#005a9e] flex items-center space-x-1">
@@ -735,7 +735,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
 
                 <div className="bg-blue-50/40 p-3 rounded-lg border border-blue-100 space-y-3">
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Link de Acceso (Portal / AutogestiÃ³n)</label>
+                    <label className="font-bold text-slate-700 block mb-1">Link de Acceso (Portal / Autogestión)</label>
                     <input
                       type="text"
                       placeholder="https://portal.aseguradora.com.ar/pas"
@@ -762,7 +762,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                       <div className="relative">
                         <input
                           type={showFormPassword ? 'text' : 'password'}
-                          placeholder="ContraseÃ±a del portal de la compaÃ±Ã­a"
+                          placeholder="Contraseña del portal de la compañía"
                           value={claveAcceso}
                           onChange={(e) => setClaveAcceso(e.target.value)}
                           className="w-full p-2 pr-9 bg-white border border-[#c7c7c7] rounded-lg font-mono"
@@ -780,7 +780,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                 </div>
               </div>
 
-              {/* SecciÃ³n 3: Comisiones por Ramo (MOD-005) */}
+              {/* Sección 3: Comisiones por Ramo (MOD-005) */}
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-1">
                   <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#005a9e] flex items-center space-x-1">
@@ -794,14 +794,14 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                   {/* Lista de comisiones actuales */}
                   {comisionesPorRamo.length === 0 ? (
                     <div className="p-3 bg-slate-50 border border-dashed border-slate-300 rounded-lg text-center text-[#6d6e71]">
-                      No hay comisiones por ramo configuradas aÃºn. Agregue al menos un ramo abajo.
+                      No hay comisiones por ramo configuradas aún. Agregue al menos un ramo abajo.
                     </div>
                   ) : (
                     <div className="border border-[#c7c7c7] rounded-lg overflow-hidden divide-y divide-slate-200">
                       <div className="bg-slate-100 px-3 py-1.5 grid grid-cols-12 gap-2 text-[10px] font-bold text-[#6d6e71] uppercase">
                         <span className="col-span-7">Ramo</span>
-                        <span className="col-span-4">ComisiÃ³n que paga (%)</span>
-                        <span className="col-span-1 text-center">AcciÃ³n</span>
+                        <span className="col-span-4">Comisión que paga (%)</span>
+                        <span className="col-span-1 text-center">Acción</span>
                       </div>
                       {comisionesPorRamo.map((c) => (
                         <div key={c.ramo} className="px-3 py-2 grid grid-cols-12 gap-2 items-center bg-white">
@@ -823,7 +823,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                               type="button"
                               onClick={() => handleRemoveComisionRamo(c.ramo)}
                               className="text-rose-600 hover:text-rose-800 p-1 rounded hover:bg-rose-50 cursor-pointer"
-                              title="Eliminar comisiÃ³n para este ramo"
+                              title="Eliminar comisión para este ramo"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -855,7 +855,7 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                     </div>
 
                     <div className="w-full sm:w-28">
-                      <label className="text-[10px] font-bold text-[#6d6e71] block mb-0.5">ComisiÃ³n %:</label>
+                      <label className="text-[10px] font-bold text-[#6d6e71] block mb-0.5">Comisión %:</label>
                       <input
                         type="number"
                         min="0"
@@ -874,13 +874,13 @@ export const AseguradorasView: React.FC<AseguradorasViewProps> = ({
                       className="mt-auto py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold transition-colors flex items-center justify-center space-x-1 cursor-pointer shrink-0"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>AÃ±adir Ramo</span>
+                      <span>Añadir Ramo</span>
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Botones de AcciÃ³n Modal */}
+              {/* Botones de Acción Modal */}
               <div className="pt-4 border-t border-slate-200 flex justify-end space-x-2">
                 <button
                   type="button"

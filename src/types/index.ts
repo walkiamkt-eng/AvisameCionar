@@ -44,41 +44,42 @@ export interface Aseguradora {
   comisionesPorRamo?: ComisionRamo[];
 }
 
-export type RamoSeguro = 
+export type RamoSeguro =
+  | 'Accidentes Personales'
+  | 'Agro'
+  | 'Asistencia al Viajero'
   | 'Automotores'
+  | 'Caución'
   | 'Combinado Familiar'
+  | 'Incendio'
   | 'Integral de Comercio'
   | 'Integral de Consorcio'
-  | 'Incendio'
   | 'Responsabilidad Civil'
-  | 'Accidentes Personales'
-  | 'Vida'
   | 'Riesgos del Trabajo (ART)'
-  | 'Caución'
-  | 'Agro'
+  | 'Robo y Riesgos Similares'
+  | 'Salud / Sepelio'
   | 'Seguro Técnico'
   | 'Transporte de Mercaderías'
-  | 'Robo y Riesgos Similares'
-  | 'Salud / Sepelio';
+  | 'Vida';
 
 export const LISTA_RAMOS_SEGURO: RamoSeguro[] = [
+  'Accidentes Personales',
+  'Agro',
+  'Asistencia al Viajero',
   'Automotores',
+  'Caución',
   'Combinado Familiar',
+  'Incendio',
   'Integral de Comercio',
   'Integral de Consorcio',
-  'Incendio',
   'Responsabilidad Civil',
-  'Accidentes Personales',
-  'Vida',
   'Riesgos del Trabajo (ART)',
-  'Caución',
-  'Agro',
+  'Robo y Riesgos Similares',
+  'Salud / Sepelio',
   'Seguro Técnico',
   'Transporte de Mercaderías',
-  'Robo y Riesgos Similares',
-  'Salud / Sepelio'
+  'Vida'
 ];
-
 export interface EndosoItem {
   id: string;
   numero: string;
