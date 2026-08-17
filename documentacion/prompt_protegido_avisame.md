@@ -467,3 +467,38 @@ El objetivo es realizar:
 > **EL CAMBIO CORRECTO, MÍNIMO, TRAZABLE Y SEGURO.**
 
 AVISAME debe evolucionar de manera incremental, conservando todo lo que ya funciona.
+
+## 7.3.1 ARCHIVO CRÍTICO — `firestore.rules`
+
+El archivo `firestore.rules` constituye un **archivo crítico de seguridad** de AVISAME y queda expresamente protegido.
+
+Ninguna modificación funcional, visual, de interfaz, de lógica de negocio o de otro componente autoriza por sí misma a modificar `firestore.rules`.
+
+Google AI Studio no debe:
+
+* reemplazar `firestore.rules`;
+* regenerarlo;
+* simplificarlo;
+* eliminar reglas;
+* modificar permisos;
+* cambiar condiciones de acceso;
+* cambiar el aislamiento por `productorId`;
+* restaurar una versión anterior;
+* crear una versión alternativa;
+* modificarlo como efecto secundario de otra tarea.
+
+Si la solicitud no incluye expresamente una modificación de las reglas de seguridad, `firestore.rules` debe permanecer sin modificaciones.
+
+Si durante una modificación se detecta que `firestore.rules` fue alterado sin formar parte del alcance autorizado:
+
+1. detener la modificación;
+2. informar el **CAMBIO NO AUTORIZADO DE REGLAS DE FIRESTORE**;
+3. identificar qué cambió;
+4. no continuar con otras modificaciones;
+5. recuperar la última versión validada de `firestore.rules`;
+6. verificar que las reglas recuperadas sean las correspondientes a la última versión válida;
+7. recién entonces continuar, si corresponde.
+
+Toda modificación intencional de `firestore.rules` debe considerarse de **alto impacto**, requerir autorización expresa y ser verificada específicamente antes de considerar la modificación terminada.
+
+La seguridad de Firestore tiene prioridad sobre la resolución rápida de errores funcionales.

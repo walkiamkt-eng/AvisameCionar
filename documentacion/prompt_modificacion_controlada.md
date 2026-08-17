@@ -210,6 +210,28 @@ Si alguna zona protegida fue modificada, debe informarse claramente.
 
 ---
 
+## 9.1 VERIFICACIÓN ESPECÍFICA DE `firestore.rules`
+
+Cuando una modificación no incluya expresamente cambios en las reglas de Firestore, debe verificarse que el archivo:
+
+`firestore.rules`
+
+no haya sido modificado durante el proceso.
+
+La verificación debe realizarse comparando el estado previo y posterior de la modificación.
+
+Si el archivo fue alterado accidentalmente por Google AI Studio u otra herramienta:
+
+* la modificación debe detenerse;
+* no debe aceptarse el cambio como parte de la modificación actual;
+* debe informarse el cambio;
+* debe recuperarse la última versión validada;
+* debe verificarse nuevamente el archivo antes de continuar.
+
+No debe asumirse que una modificación de Firestore es necesaria simplemente porque una funcionalidad relacionada presenta un error.
+
+Si la modificación solicitada sí requiere cambiar `firestore.rules`, debe tratarse como una modificación de alto impacto y seguir las reglas de autorización, verificación y recuperación correspondientes.
+
 # 10. FASE 8 — INFORME
 
 Al terminar, generar el siguiente informe:
