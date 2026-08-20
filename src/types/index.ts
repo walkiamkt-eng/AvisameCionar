@@ -1,23 +1,66 @@
 export type TipoCliente = 'Persona Física' | 'Persona Jurídica';
 export type CondicionIVA = 'Responsable Inscripto' | 'Monotributo' | 'Consumidor Final' | 'Exento';
 export type PerfilRiesgo = 'Bajo' | 'Medio' | 'Alto' | 'Corporativo';
+export type TipoDocumentoCliente = 'DNI' | 'CUIL' | 'CUIT';
+export type SexoCliente = 'Masculino' | 'Femenino' | 'Otro' | 'No especificado';
+export type MedioContactoPreferido = 'WhatsApp' | 'Email' | 'Teléfono Principal' | 'Teléfono Secundario' | 'Indiferente';
+export type EstadoCliente = 'Activo' | 'Inhabilitado' | 'Inactivo';
+
+export interface RegistroTrazabilidadCliente {
+  id: string;
+  clienteId: string;
+  operacion: 'ALTA' | 'MODIFICACIÓN' | 'INHABILITACIÓN' | 'HABILITACIÓN';
+  fecha: string; // YYYY-MM-DD
+  hora: string; // HH:mm:ss
+  usuario: string; // email o identificador de usuario activo
+  datosModificados?: {
+    campo: string;
+    label?: string;
+    valorAnterior: any;
+    valorNuevo: any;
+  }[];
+  resumenModificacion?: string;
+  estadoAnterior?: string;
+  estadoPosterior?: string;
+}
 
 export interface Cliente {
   id: string;
   productorId?: string;
-  cuitCuilDni: string;
+  cuitCuilDni: string; // Mantenido para retrocompatibilidad general
+  tipoDocumento?: TipoDocumentoCliente;
+  numeroDocumento?: string;
   tipo: TipoCliente;
+  nombre?: string;
+  apellido?: string;
   nombreRazonSocial: string;
+  nombreFantasia?: string;
   condicionIva: CondicionIVA;
+  fechaNacimiento?: string;
+  sexo?: SexoCliente;
   email: string;
+  emailSecundario?: string;
   telefono: string;
+  telefonoSecundario?: string;
+  whatsapp?: string; // Campo específico e independiente del teléfono
+  medioContactoPreferido?: MedioContactoPreferido;
   domicilio: string;
+  calle?: string;
+  numero?: string;
+  piso?: string;
+  depto?: string;
+  codigoPostal?: string;
   localidad: string;
   provincia: string;
+  productorResponsable?: string;
   perfilRiesgo: PerfilRiesgo;
   fechaAlta: string;
-  estado: 'Activo' | 'Inactivo';
-  notas?: string;
+  medioIncorporacion?: string;
+  estado: EstadoCliente;
+  notas?: string; // Observaciones internas
+  observaciones?: string;
+  notasAdministrativas?: string;
+  trazabilidad?: RegistroTrazabilidadCliente[];
 }
 
 export interface ComisionRamo {

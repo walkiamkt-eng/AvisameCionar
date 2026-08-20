@@ -223,8 +223,36 @@ function MainAppContent() {
   const handleAddCliente = async (nuevo: Omit<Cliente, 'id' | 'fechaAlta'>) => {
     const id = `cli-${Date.now()}`;
     const fechaAlta = new Date().toISOString().split('T')[0];
-    const clienteCompleto: Cliente = { ...nuevo, id, fechaAlta, productorId };
+    const horaAlta = new Date().toTimeString().split(' ')[0];
+    const trazabilidadInicial = nuevo.trazabilidad || [
+      {
+        id: `traz-${Date.now()}`,
+        clienteId: id,
+        operacion: 'ALTA' as const,
+        fecha: fechaAlta,
+        hora: horaAlta,
+        usuario: user.email || 'PAS Titular',
+        resumenModificacion: 'Alta de nuevo cliente en cartera comercial',
+        estadoAnterior: '-',
+        estadoPosterior: nuevo.estado || 'Activo'
+      }
+    ];
+    const clienteCompleto: Cliente = {
+      ...nuevo,
+      id,
+      fechaAlta,
+      productorId,
+      trazabilidad: trazabilidadInicial
+    };
     setClientes((prev) => [clienteCompleto, ...prev]);
+    await saveDocument('clientes', clienteCompleto, productorId);
+  };
+
+  const handleUpdateCliente = async (clienteActualizado: Cliente) => {
+    const clienteCompleto: Cliente = { ...clienteActualizado, productorId };
+    setClientes((prev) =>
+      prev.map((c) => (c.id === clienteActualizado.id ? clienteCompleto : c))
+    );
     await saveDocument('clientes', clienteCompleto, productorId);
   };
 
@@ -436,6 +464,7 @@ function MainAppContent() {
               vehiculos={vehiculos}
               contratosArt={contratosArt}
               onAddCliente={handleAddCliente}
+              onUpdateCliente={handleUpdateCliente}
               onNavigate={setActiveProcessId}
             />
           )}
