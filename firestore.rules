@@ -10,7 +10,7 @@ service cloud.firestore {
     function isSystemAdmin() {
       return isSignedIn() && (
         request.auth.token.email == 'walkia.mkt@gmail.com' ||
-        request.auth.token.email == 'pas.titular@avisame.cionar.com.ar'
+        request.auth.token.email == 'cionarconsultores@gmail.com'
       );
     }
 
