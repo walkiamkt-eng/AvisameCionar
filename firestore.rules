@@ -1,56 +1,82 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isOwner(productorId) {
-      return isSignedIn() && request.auth.uid == productorId;
-    }
-
-    function isDocOwner() {
+    function isSystemAdmin() {
       return isSignedIn() && (
-        (resource == null || resource.data.productorId == request.auth.uid) &&
-        (request.resource == null || request.resource.data.productorId == request.auth.uid)
+        request.auth.token.email == 'walkia.mkt@gmail.com' ||
+        request.auth.token.email == 'pas.titular@avisame.cionar.com.ar'
       );
     }
 
-    // Default deny
     match /{document=**} {
       allow read, write: if false;
     }
 
     match /clientes/{clienteId} {
-      allow read, write: if isDocOwner();
+      allow read: if isSignedIn() && resource.data.productorId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.productorId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.productorId == request.auth.uid && request.resource.data.productorId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.productorId == request.auth.uid;
     }
 
     match /aseguradoras/{aseguradoraId} {
-      allow read, write: if isDocOwner();
+      allow read: if isSignedIn() && resource.data.productorId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.productorId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.productorId == request.auth.uid && request.resource.data.productorId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.productorId == request.auth.uid;
     }
 
     match /polizas/{polizaId} {
-      allow read, write: if isDocOwner();
+      allow read: if isSignedIn() && resource.data.productorId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.productorId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.productorId == request.auth.uid && request.resource.data.productorId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.productorId == request.auth.uid;
     }
 
     match /vehiculos/{vehiculoId} {
-      allow read, write: if isDocOwner();
+      allow read: if isSignedIn() && resource.data.productorId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.productorId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.productorId == request.auth.uid && request.resource.data.productorId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.productorId == request.auth.uid;
     }
 
     match /contratosArt/{contratoId} {
-      allow read, write: if isDocOwner();
+      allow read: if isSignedIn() && resource.data.productorId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.productorId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.productorId == request.auth.uid && request.resource.data.productorId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.productorId == request.auth.uid;
     }
 
     match /reglas/{reglaId} {
-      allow read, write: if isDocOwner();
+      allow read: if isSignedIn() && resource.data.productorId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.productorId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.productorId == request.auth.uid && request.resource.data.productorId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.productorId == request.auth.uid;
     }
 
     match /alertasTareas/{alertaId} {
-      allow read, write: if isDocOwner();
+      allow read: if isSignedIn() && resource.data.productorId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.productorId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.productorId == request.auth.uid && request.resource.data.productorId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.productorId == request.auth.uid;
     }
 
     match /renovaciones/{renovacionId} {
-      allow read, write: if isDocOwner();
+      allow read: if isSignedIn() && resource.data.productorId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.productorId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.productorId == request.auth.uid && request.resource.data.productorId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.productorId == request.auth.uid;
+    }
+
+    match /ramos/{ramoId} {
+      allow read: if isSignedIn();
+      allow write: if isSystemAdmin();
     }
 
     match /system_config/{configId} {
