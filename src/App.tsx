@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   Cliente,
   Aseguradora,
@@ -9,6 +9,8 @@ import {
   AlertaTarea,
   RenovacionItem,
   EstadoRenovacion,
+  RamoCatalogo,
+  INITIAL_RAMOS_CATALOGO,
   getRenovacionesUnificadas,
   isEstadoGestionCerrado
 } from './types';
@@ -28,7 +30,10 @@ import {
   seedCollectionIfEmpty,
   clearAllFirestoreCollections,
   checkIsDatabaseCleared,
-  markDatabaseStatus
+  markDatabaseStatus,
+  subscribeToGeneralCollection,
+  saveGeneralDocument,
+  seedGeneralCollectionIfEmpty
 } from './lib/firebase';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginView } from './components/LoginView';
@@ -45,6 +50,7 @@ import { ArtView } from './components/ArtView';
 import { AutomatizacionesView } from './components/AutomatizacionesView';
 import { RenovacionesView } from './components/RenovacionesView';
 import { ManualModulo0View } from './components/ManualModulo0View';
+import { AdminRamosView } from './components/AdminRamosView';
 import { Database, ShieldCheck } from 'lucide-react';
 
 function MainAppContent() {
@@ -61,6 +67,7 @@ function MainAppContent() {
   const [reglas, setReglas] = useState<ReglaAutomatizacion[]>([]);
   const [alertasTareas, setAlertasTareas] = useState<AlertaTarea[]>([]);
   const [renovaciones, setRenovaciones] = useState<RenovacionItem[]>([]);
+  const [ramos, setRamos] = useState<RamoCatalogo[]>(INITIAL_RAMOS_CATALOGO);
   const [isCloudConnected, setIsCloudConnected] = useState<boolean>(false);
   const [isDbCleared, setIsDbCleared] = useState<boolean>(false);
   const [showQuickModal, setShowQuickModal] = useState<boolean>(false);
@@ -85,6 +92,10 @@ function MainAppContent() {
     const initFirebaseData = async () => {
       try {
         console.log(`[DEBUG App] Initializing Firestore connection for active producer UID: ${productorId}`);
+
+        // Seed general ramos catalog if needed (independent of tenant isolation)
+        await seedGeneralCollectionIfEmpty('ramos', INITIAL_RAMOS_CATALOGO);
+
         const isCleared = await checkIsDatabaseCleared(productorId);
         setIsDbCleared(isCleared);
 
@@ -136,6 +147,13 @@ function MainAppContent() {
       setRenovaciones(data);
     });
 
+    // Real-time listener for General Shared Ramos Catalog (MOD-010)
+    const unsubRamos = subscribeToGeneralCollection<RamoCatalogo>('ramos', (data) => {
+      if (data && data.length > 0) {
+        setRamos(data);
+      }
+    });
+
     return () => {
       unsubClientes();
       unsubAseguradoras();
@@ -145,6 +163,7 @@ function MainAppContent() {
       unsubReglas();
       unsubTareas();
       unsubRenovaciones();
+      unsubRamos();
     };
   }, [user]);
 
@@ -271,6 +290,78 @@ function MainAppContent() {
     await saveDocument('aseguradoras', aseguradoraCompleta, productorId);
   };
 
+  // Handler to add a new Ramo to the shared General Catalog (MOD-010)
+  const handleAddRamo = async (nombre: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const trimmed = nombre.trim();
+
+      if (!trimmed) {
+        return {
+          success: false,
+          error: 'El nombre del ramo no puede estar vacio.'
+        };
+      }
+
+      // Case-insensitive duplicate check
+      const normalized = trimmed.toLowerCase();
+
+      if (ramos.some((r) => r.nombre.trim().toLowerCase() === normalized)) {
+        return {
+          success: false,
+          error: `El ramo "${trimmed}" ya existe en el catalogo general.`
+        };
+      }
+
+      const id = `ramo-${Date.now()}`;
+
+      const nuevoRamo: RamoCatalogo = {
+        id,
+        nombre: trimmed,
+        activo: true,
+        fechaCreacion: new Date().toISOString()
+      };
+
+      // Optimistic local state update
+      setRamos((prev) => [...prev, nuevoRamo]);
+
+      // Save to general/shared Firestore collection without tenant isolation
+      await saveGeneralDocument('ramos', nuevoRamo);
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error al registrar ramo en catalogo general:', err);
+
+      return {
+        success: false,
+        error: err?.message || 'Error al guardar el ramo.'
+      };
+    }
+  };
+
+  // Handler to activate/deactivate a Ramo in the shared General Catalog (MOD-010)
+  const handleToggleRamo = async (ramo: RamoCatalogo): Promise<void> => {
+    try {
+      const ramoActualizado: RamoCatalogo = {
+        ...ramo,
+        activo: !ramo.activo
+      };
+
+      setRamos((prev) =>
+        prev.map((r) => (r.id === ramo.id ? ramoActualizado : r))
+      );
+
+      await saveGeneralDocument('ramos', ramoActualizado);
+    } catch (err: any) {
+      console.error('Error al actualizar estado del ramo:', err);
+
+      // Restore previous state if Firestore save fails
+      setRamos((prev) =>
+        prev.map((r) => (r.id === ramo.id ? ramo : r))
+      );
+
+      throw err;
+    }
+  };
   const handleAddPoliza = async (nueva: Omit<Poliza, 'id'>) => {
     const id = `pol-${Date.now()}`;
     const polizaCompleta: Poliza = { ...nueva, id, productorId };
@@ -474,6 +565,13 @@ function MainAppContent() {
               aseguradoras={aseguradoras}
               onAddAseguradora={handleAddAseguradora}
               onUpdateAseguradora={handleUpdateAseguradora}
+            />
+          )}
+          {activeProcessId === 'admin-ramos' && (
+            <AdminRamosView
+              ramos={ramos}
+              onAddRamo={handleAddRamo}
+              onToggleRamo={handleToggleRamo}
             />
           )}
 

@@ -86,7 +86,12 @@ export interface Aseguradora {
   claveAcceso?: string;
   comisionesPorRamo?: ComisionRamo[];
 }
-
+export interface RamoCatalogo {
+  id: string;
+  nombre: string;
+  activo: boolean;
+  fechaCreacion?: string;
+}
 export type RamoSeguro =
   | 'Accidentes Personales'
   | 'Agro'
@@ -103,7 +108,8 @@ export type RamoSeguro =
   | 'Salud / Sepelio'
   | 'Seguro Técnico'
   | 'Transporte de Mercaderías'
-  | 'Vida';
+  | 'Vida'
+  | (string & {});
 
 export const LISTA_RAMOS_SEGURO: RamoSeguro[] = [
   'Accidentes Personales',
@@ -123,6 +129,11 @@ export const LISTA_RAMOS_SEGURO: RamoSeguro[] = [
   'Transporte de Mercaderías',
   'Vida'
 ];
+export const INITIAL_RAMOS_CATALOGO: RamoCatalogo[] = LISTA_RAMOS_SEGURO.map((nombre, index) => ({
+  id: `ramo-init-${index + 1}`,
+  nombre,
+  activo: true
+}));
 export interface EndosoItem {
   id: string;
   numero: string;

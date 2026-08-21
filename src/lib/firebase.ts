@@ -699,5 +699,119 @@ export async function clearAllFirestoreCollections(productorId: string): Promise
     }
   }
 }
+/**
+ * Subscribe to a general/shared Firestore collection (not scoped by productorId).
+ */
+export function subscribeToGeneralCollection<T>(
+  collectionName: string,
+  callback: (data: T[]) => void
+): () => void {
+  if (!firebaseInitStatus.isValid) {
+    callback([]);
+    return () => {};
+  }
 
+  const colRef = collection(db, collectionName);
+
+  return onSnapshot(
+    colRef,
+    (snapshot) => {
+      const items: T[] = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data()
+      })) as T[];
+
+      callback(items);
+    },
+    (error) => {
+      console.error(
+        `[Firestore] Error de suscripción en '${collectionName}':`,
+        error?.code,
+        error?.message || error
+      );
+    }
+  );
+}
+
+/**
+ * Save or update a document in a general/shared collection.
+ */
+export async function saveGeneralDocument<T extends { id: string }>(
+  collectionName: string,
+  item: T
+): Promise<void> {
+  if (!firebaseInitStatus.isValid) {
+    throw new Error(`Error en Firestore: ${firebaseInitStatus.errorDetail}`);
+  }
+
+  const docRef = doc(db, collectionName, item.id);
+  const cleanedItem = cleanForFirestore(item);
+
+  await setDoc(docRef, cleanedItem, { merge: true });
+}
+
+/**
+ * Seed initial data for a general/shared collection.
+ * Existing records are preserved and initial records are added only if missing.
+ */
+export async function seedGeneralCollectionIfEmpty<
+  T extends { id: string; nombre?: string }
+>(
+  collectionName: string,
+  initialData: T[]
+): Promise<void> {
+  if (!firebaseInitStatus.isValid) return;
+
+  try {
+    const colRef = collection(db, collectionName);
+    const snapshot = await getDocs(colRef);
+
+    if (snapshot.empty && initialData.length > 0) {
+      const batch = writeBatch(db);
+
+      for (const item of initialData) {
+        const itemRef = doc(db, collectionName, item.id);
+        const cleanedItem = cleanForFirestore(item);
+        batch.set(itemRef, cleanedItem);
+      }
+
+      await batch.commit();
+      return;
+    }
+
+    if (!snapshot.empty) {
+      const existingNames = new Set(
+        snapshot.docs.map((d) =>
+          String((d.data() as any).nombre || '')
+            .toLowerCase()
+            .trim()
+        )
+      );
+
+      const missingItems = initialData.filter(
+        (item) =>
+          item.nombre &&
+          !existingNames.has(item.nombre.toLowerCase().trim())
+      );
+
+      if (missingItems.length > 0) {
+        const batch = writeBatch(db);
+
+        for (const item of missingItems) {
+          const itemRef = doc(db, collectionName, item.id);
+          const cleanedItem = cleanForFirestore(item);
+          batch.set(itemRef, cleanedItem);
+        }
+
+        await batch.commit();
+      }
+    }
+  } catch (error: any) {
+    console.warn(
+      `[Firestore] Error inicializando colección general '${collectionName}':`,
+      error?.code,
+      error?.message || String(error)
+    );
+  }
+}
 
