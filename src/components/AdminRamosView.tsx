@@ -138,7 +138,11 @@ export const AdminRamosView: React.FC<AdminRamosViewProps> = ({
         </div>
 
         <div className="divide-y divide-slate-100">
-          {ramos.map((ramo) => (
+          {[...ramos]
+            .sort((a, b) =>
+              a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' })
+            )
+            .map((ramo) => (
             <div
               key={ramo.id}
               className="px-5 py-3 flex items-center justify-between gap-4"
