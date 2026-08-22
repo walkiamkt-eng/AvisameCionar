@@ -78,8 +78,8 @@ export const PolizasView: React.FC<PolizasViewProps> = ({
     setEditingPoliza(null);
     setNumPoliza('');
     setEndosoNum('000');
-    setClienteId(clientes[0]?.id || '');
-    setAseguradoraId(aseguradoras[0]?.id || '');
+    setClienteId('');
+    setAseguradoraId('');
     setRamo('Automotores');
     setVigDesde(new Date().toISOString().split('T')[0]);
     const unAnioMas = new Date();
@@ -450,6 +450,7 @@ export const PolizasView: React.FC<PolizasViewProps> = ({
                     onChange={(e) => setClienteId(e.target.value)}
                     className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg focus:ring-2 focus:ring-[#005a9e]"
                   >
+                    <option value="">Seleccione un cliente...</option>
                     {clientes.map((c) => (
                       <option key={c.id} value={c.id}>{c.nombreRazonSocial}</option>
                     ))}
@@ -463,6 +464,7 @@ export const PolizasView: React.FC<PolizasViewProps> = ({
                     onChange={(e) => setAseguradoraId(e.target.value)}
                     className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg focus:ring-2 focus:ring-[#005a9e]"
                   >
+                    <option value="">Seleccione una aseguradora...</option>
                     {aseguradoras.map((a) => (
                       <option key={a.id} value={a.id}>{a.nombre}</option>
                     ))}
