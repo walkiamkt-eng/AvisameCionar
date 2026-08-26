@@ -402,6 +402,7 @@ export const INITIAL_ART: ContratoART[] = [
     alicuotaFija: 850,
     alicuotaVariable: 3.2,
     fechaInicioContrato: '2025-05-10', // LLEVA 15 MESES -> ELEGIBLE PARA TRASPASO
+    fechaFinContrato: '2026-05-10',
     mesesPermanencia: 15,
     esElegibleTraspaso: true,
     clausulasNoRepeticion: ['30-55443322-1 (Techint S.A.)', '33-70891234-9 (YPF S.A.)']
@@ -418,6 +419,7 @@ export const INITIAL_ART: ContratoART[] = [
     alicuotaFija: 920,
     alicuotaVariable: 2.8,
     fechaInicioContrato: '2026-02-01', // LLEVA 6 MESES -> NO ELEGIBLE AUN
+    fechaFinContrato: '2027-02-01',
     mesesPermanencia: 6,
     esElegibleTraspaso: false,
     clausulasNoRepeticion: ['30-60001234-5 (Cargill S.A.C.I.)']

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Cliente,
   Aseguradora,
@@ -422,6 +422,17 @@ function MainAppContent() {
     await saveDocument('contratosArt', contratoCompleto, productorId);
   };
 
+  const handleUpdateContratoArt = async (contratoActualizado: ContratoART) => {
+    const contratoCompleto: ContratoART = {
+      ...contratoActualizado,
+      productorId
+    };
+    setContratosArt((prev) =>
+      prev.map((c) => (c.id === contratoActualizado.id ? contratoCompleto : c))
+    );
+    await saveDocument('contratosArt', contratoCompleto, productorId);
+  };
+
   const handleCompleteTask = async (taskId: string) => {
     const task = alertasTareas.find((t) => t.id === taskId);
     if (task) {
@@ -601,6 +612,7 @@ function MainAppContent() {
               clientes={clientes}
               aseguradoras={aseguradoras}
               onAddContratoArt={handleAddContratoArt}
+              onUpdateContratoArt={handleUpdateContratoArt}
             />
           )}
 

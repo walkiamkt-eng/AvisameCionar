@@ -198,6 +198,8 @@ export interface ContratoART {
   alicuotaFija: number; // Cuota fija por trabajador ARS
   alicuotaVariable: number; // % sobre masa salarial
   fechaInicioContrato: string;
+  fechaFinContrato?: string;
+  fechaUltimaRenovacion?: string;
   mesesPermanencia: number; // Monitoreo para los 12 meses de traspaso por Ley 24.557
   esElegibleTraspaso: boolean;
   clausulasNoRepeticion: string[]; // Listado de CUITs beneficiarios
