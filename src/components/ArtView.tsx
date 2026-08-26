@@ -8,8 +8,7 @@ import {
   Clock,
   CheckCircle2,
   RotateCcw,
-  Calendar,
-  Building2,
+  Search,
   Info
 } from 'lucide-react';
 
@@ -28,6 +27,9 @@ export const ArtView: React.FC<ArtViewProps> = ({
   onAddContratoArt,
   onUpdateContratoArt
 }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [aseguradoraFilter, setAseguradoraFilter] = useState<string>('Todas');
+
   const [showModal, setShowModal] = useState(false);
   const [editingContrato, setEditingContrato] = useState<ContratoART | null>(null);
   const [showRenewalModal, setShowRenewalModal] = useState<ContratoART | null>(null);
@@ -46,14 +48,35 @@ export const ArtView: React.FC<ArtViewProps> = ({
   const [fechaInicio, setFechaInicio] = useState('2026-01-01');
   const [fechaFin, setFechaFin] = useState('2027-01-01');
 
-  // Form State for Renovación de Contrato ART (only dates)
+  // Form State for Renovación de Contrato ART
   const [renovacionFechaInicio, setRenovacionFechaInicio] = useState('');
   const [renovacionFechaFin, setRenovacionFechaFin] = useState('');
   const [renewalError, setRenewalError] = useState<string | null>(null);
 
-
   const getCliente = (id: string) => clientes.find((c) => c.id === id);
   const getAseguradora = (id: string) => aseguradoras.find((a) => a.id === id);
+
+  const filteredContratosArt = contratosArt.filter((art) => {
+    const cliente = getCliente(art.clienteId);
+    const aseguradora = getAseguradora(art.aseguradoraId);
+
+    const search = searchTerm.trim().toLowerCase();
+
+    const matchesSearch =
+      !search ||
+      art.numeroContrato.toLowerCase().includes(search) ||
+      (cliente?.nombreRazonSocial || '').toLowerCase().includes(search) ||
+      (cliente?.cuitCuilDni || '').toLowerCase().includes(search) ||
+      (aseguradora?.nombre || '').toLowerCase().includes(search) ||
+      (art.ciiuActividad || '').toLowerCase().includes(search) ||
+      (art.descripcionActividad || '').toLowerCase().includes(search);
+
+    const matchesAseguradora =
+      aseguradoraFilter === 'Todas' ||
+      art.aseguradoraId === aseguradoraFilter;
+
+    return matchesSearch && matchesAseguradora;
+  });
 
   const handleOpenAlta = () => {
     setEditingContrato(null);
@@ -88,6 +111,7 @@ export const ArtView: React.FC<ArtViewProps> = ({
     setAltaError(null);
     setShowModal(true);
   };
+
   const handleAltaSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setAltaError(null);
@@ -97,8 +121,8 @@ export const ArtView: React.FC<ArtViewProps> = ({
       return;
     }
 
-    // 1. Obtener cliente seleccionado y validar CUIT del titular
     const selectedCliente = getCliente(empresaClienteId);
+
     if (!selectedCliente) {
       setAltaError('Debe seleccionar un Empleador / Cliente titular del contrato.');
       return;
@@ -107,33 +131,44 @@ export const ArtView: React.FC<ArtViewProps> = ({
     const cuitTitularRaw = selectedCliente.cuitCuilDni || '';
     const cleanCuitTitular = cuitTitularRaw.replace(/\D/g, '');
 
-    // Validar formato de CUIT argentino
     const cuitValidation = validateCuitCuil(cleanCuitTitular);
+
     if (!cuitValidation.isValid) {
       setAltaError(
-        `El CUIT del titular "${selectedCliente.nombreRazonSocial}" es inválido: ${cuitValidation.error || 'Debe ser un CUIT argentino válido de 11 dígitos con dígito verificador correcto'}. Corrija el documento del cliente antes de registrar el contrato ART.`
+        `El CUIT del titular "${selectedCliente.nombreRazonSocial}" es inválido: ${
+          cuitValidation.error ||
+          'Debe ser un CUIT argentino válido de 11 dígitos con dígito verificador correcto'
+        }. Corrija el documento del cliente antes de registrar el contrato ART.`
       );
       return;
     }
 
-    // 2. Regla de negocio: un único contrato ART por CUIT de titular.
-    // Al modificar, se excluye el propio contrato para no bloquearse a sí mismo.
     const contratoExistentePorCuit = contratosArt.find((art) => {
       if (editingContrato && art.id === editingContrato.id) {
         return false;
       }
 
       const clienteDeContrato = getCliente(art.clienteId);
-      if (!clienteDeContrato || !clienteDeContrato.cuitCuilDni) return false;
 
-      const cleanCuitExistente = clienteDeContrato.cuitCuilDni.replace(/\D/g, '');
+      if (!clienteDeContrato || !clienteDeContrato.cuitCuilDni) {
+        return false;
+      }
+
+      const cleanCuitExistente =
+        clienteDeContrato.cuitCuilDni.replace(/\D/g, '');
+
       return cleanCuitExistente === cleanCuitTitular;
     });
 
     if (contratoExistentePorCuit) {
-      const clienteExistente = getCliente(contratoExistentePorCuit.clienteId);
+      const clienteExistente = getCliente(
+        contratoExistentePorCuit.clienteId
+      );
+
       setAltaError(
-        `El CUIT titular ${cuitTitularRaw} (${selectedCliente.nombreRazonSocial}) ya posee un contrato ART registrado en el sistema (Contrato N° ${contratoExistentePorCuit.numeroContrato} - ${clienteExistente?.nombreRazonSocial || 'Titular'}). Solo se permite un único contrato ART por CUIT de titular.`
+        `El CUIT titular ${cuitTitularRaw} (${selectedCliente.nombreRazonSocial}) ya posee un contrato ART registrado en el sistema (Contrato N° ${contratoExistentePorCuit.numeroContrato} - ${
+          clienteExistente?.nombreRazonSocial || 'Titular'
+        }). Solo se permite un único contrato ART por CUIT de titular.`
       );
       return;
     }
@@ -153,8 +188,6 @@ export const ArtView: React.FC<ArtViewProps> = ({
     };
 
     if (editingContrato) {
-      // Modificación: conserva los datos históricos que no forman parte
-      // del formulario de edición.
       const contratoActualizado: ContratoART = {
         ...editingContrato,
         ...datosContrato
@@ -163,7 +196,6 @@ export const ArtView: React.FC<ArtViewProps> = ({
       onUpdateContratoArt(contratoActualizado);
       setEditingContrato(null);
     } else {
-      // Alta: crea un contrato nuevo sin datos históricos previos.
       onAddContratoArt({
         ...datosContrato,
         clausulasNoRepeticion: []
@@ -174,9 +206,12 @@ export const ArtView: React.FC<ArtViewProps> = ({
     setAltaError(null);
     setShowModal(false);
   };
+
   const handleOpenRenovar = (art: ContratoART) => {
     setShowRenewalModal(art);
-    setRenovacionFechaInicio(art.fechaFinContrato || art.fechaInicioContrato);
+    setRenovacionFechaInicio(
+      art.fechaFinContrato || art.fechaInicioContrato
+    );
     setRenovacionFechaFin('');
     setRenewalError(null);
   };
@@ -185,38 +220,51 @@ export const ArtView: React.FC<ArtViewProps> = ({
     e.preventDefault();
     setRenewalError(null);
 
-    // Validaciones:
-    // - debe existir contrato seleccionado;
-    // - debe existir fecha de inicio de nueva vigencia;
-    // - debe existir fecha de fin;
-    // - fecha fin debe ser posterior a fecha inicio;
-    // - si falla una validación, no guardar.
     if (!showRenewalModal) {
-      setRenewalError('No se ha seleccionado ningún contrato para renovar.');
-      return;
-    }
-    if (!renovacionFechaInicio) {
-      setRenewalError('Debe ingresar la fecha de inicio de la nueva vigencia.');
-      return;
-    }
-    if (!renovacionFechaFin) {
-      setRenewalError('Debe ingresar la fecha de fin de la nueva vigencia.');
-      return;
-    }
-    if (renovacionFechaFin <= renovacionFechaInicio) {
-      setRenewalError('La fecha de fin debe ser posterior a la fecha de inicio.');
+      setRenewalError(
+        'No se ha seleccionado ningún contrato para renovar.'
+      );
       return;
     }
 
-    // fechaInicioContrato es siempre la fecha ORIGINAL del contrato y nunca debe reiniciarse con una renovación.
-    const fechaIniOriginal = new Date(showRenewalModal.fechaInicioContrato);
+    if (!renovacionFechaInicio) {
+      setRenewalError(
+        'Debe ingresar la fecha de inicio de la nueva vigencia.'
+      );
+      return;
+    }
+
+    if (!renovacionFechaFin) {
+      setRenewalError(
+        'Debe ingresar la fecha de fin de la nueva vigencia.'
+      );
+      return;
+    }
+
+    if (renovacionFechaFin <= renovacionFechaInicio) {
+      setRenewalError(
+        'La fecha de fin debe ser posterior a la fecha de inicio.'
+      );
+      return;
+    }
+
+    const fechaIniOriginal = new Date(
+      showRenewalModal.fechaInicioContrato
+    );
+
     const now = new Date();
-    const meses = Math.floor((now.getTime() - fechaIniOriginal.getTime()) / (1000 * 3600 * 24 * 30.44));
+
+    const meses = Math.floor(
+      (now.getTime() - fechaIniOriginal.getTime()) /
+        (1000 * 3600 * 24 * 30.44)
+    );
+
     const esElegible = meses >= 12;
 
     const contratoActualizado: ContratoART = {
       ...showRenewalModal,
-      fechaInicioContrato: showRenewalModal.fechaInicioContrato, // Conserva original
+      fechaInicioContrato:
+        showRenewalModal.fechaInicioContrato,
       fechaFinContrato: renovacionFechaFin,
       fechaUltimaRenovacion: new Date().toISOString(),
       mesesPermanencia: meses > 0 ? meses : 0,
@@ -229,14 +277,17 @@ export const ArtView: React.FC<ArtViewProps> = ({
 
   return (
     <div className="space-y-6">
-      
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-[#c7c7c7] shadow-xs">
         <div>
           <div className="flex items-center space-x-2">
             <Briefcase className="w-5 h-5 text-[#005a9e]" />
-            <h2 className="text-lg font-bold text-slate-900">Proceso 5 · Administración de ART (Ley 24.557)</h2>
+            <h2 className="text-lg font-bold text-slate-900">
+              Proceso 5 · Administración de ART (Ley 24.557)
+            </h2>
           </div>
+
           <p className="text-xs text-[#6d6e71] mt-0.5">
             Supervisión de Contratos de Riesgos del Trabajo, Renovación de Vigencias, Traspasos de 12 Meses y Cláusulas de No Repetición.
           </p>
@@ -251,149 +302,266 @@ export const ArtView: React.FC<ArtViewProps> = ({
         </button>
       </div>
 
-      {/* Contracts List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {contratosArt.map((art) => {
-          const cliente = getCliente(art.clienteId);
-          const aseguradora = getAseguradora(art.aseguradoraId);
+      {/* Search & Filters */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-[#c7c7c7]">
 
-          return (
-            <div key={art.id} className="bg-white rounded-xl border border-[#c7c7c7] p-5 shadow-xs space-y-4 flex flex-col justify-between">
-              <div className="space-y-3">
-                
-                {/* Title & Status */}
-                <div className="flex justify-between items-start gap-2 border-b border-slate-100 pb-3">
-                  <div>
-                    <span className="text-base font-mono font-bold text-[#007bc1] bg-[#005a9e]/10 px-2 py-0.5 rounded mb-1">
-                      Contrato N° {art.numeroContrato}
-                    </span>
-                    <h3 className="text-base font-bold text-slate-900 mt-1">{cliente?.nombreRazonSocial || 'Empleador'}</h3>
-                    <p className="text-xs text-[#6d6e71]">CUIT: {cliente?.cuitCuilDni || '(Sin CUIT)'}</p>
-                  </div>
+        <div className="relative w-full sm:w-96">
+          <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#9e9e9e]" />
 
-                  <div className="text-right">
-                    <span className="text-[10px] text-[#9e9e9e] uppercase font-bold block">Aseguradora ART</span>
-                    <span className="text-xs font-bold text-[#005a9e]">{aseguradora?.nombre || 'Aseguradora'}</span>
-                  </div>
-                </div>
+          <input
+            type="text"
+            placeholder="Buscar contrato, empleador, CUIT, ART, CIIU o actividad..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-3 py-1.5 bg-white border border-[#c7c7c7] rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#005a9e] text-slate-800"
+          />
+        </div>
 
-                {/* Vigencia Completa */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs bg-blue-50/60 p-2.5 rounded-lg border border-blue-100 text-slate-800 gap-1.5">
-                  <div className="flex items-center space-x-1.5">
-                    <Calendar className="w-4 h-4 text-[#005a9e]" />
-                    <span className="font-bold text-slate-700">Vigencia:</span>
-                    <span className="font-mono font-semibold text-[#005a9e]">
-                      {art.fechaInicioContrato} al {art.fechaFinContrato || 'S/D'}
-                    </span>
-                  </div>
-                  {art.fechaUltimaRenovacion && (
-                    <span className="text-[10px] text-slate-500 font-mono">
-                      Última renovación: {new Date(art.fechaUltimaRenovacion).toLocaleDateString('es-AR')}
-                    </span>
-                  )}
-                </div>
+        <div className="flex items-center space-x-2 w-full sm:w-auto text-xs overflow-x-auto pb-1 sm:pb-0">
+          <span className="text-[#6d6e71] font-bold whitespace-nowrap">
+            ART:
+          </span>
 
-                {/* Economic & Workers Details */}
-                <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-3 rounded-lg border border-[#c7c7c7]">
-                  <div>
-                    <span className="text-[#9e9e9e] block text-[10px]">CIIU / Actividad</span>
-                    <span className="font-semibold text-slate-800">{art.ciiuActividad} - {art.descripcionActividad}</span>
-                  </div>
-                  <div>
-                    <span className="text-[#9e9e9e] block text-[10px]">Nómina de Personal</span>
-                    <span className="font-bold text-slate-900 font-mono">{art.cantidadTrabajadores} Empleados</span>
-                  </div>
-                  <div>
-                    <span className="text-[#9e9e9e] block text-[10px]">Masa Salarial Estimada</span>
-                    <span className="font-bold font-mono text-[#005a9e]">${art.masaSalarialEstimada.toLocaleString('es-AR')} ARS</span>
-                  </div>
-                  <div>
-                    <span className="text-[#9e9e9e] block text-[10px]">Alícuota Aplicada</span>
-                    <span className="font-mono font-bold text-slate-800">${art.alicuotaFija} Fija + {art.alicuotaVariable}%</span>
-                  </div>
-                </div>
+          {[
+            { id: 'Todas', nombre: 'Todas' },
+            ...aseguradoras.map((a) => ({
+              id: a.id,
+              nombre: a.nombre
+            }))
+          ].map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              onClick={() => setAseguradoraFilter(a.id)}
+              className={`px-3 py-1 rounded-md font-medium transition-all whitespace-nowrap ${
+                aseguradoraFilter === a.id
+                  ? 'bg-[#005a9e] text-white shadow-sm'
+                  : 'bg-white border border-[#c7c7c7] text-[#6d6e71] hover:border-[#007bc1] hover:text-[#005a9e]'
+              }`}
+            >
+              {a.nombre}
+            </button>
+          ))}
+        </div>
+      </div>
 
-                {/* Ley 24.557 Transfer Eligibility Monitor */}
-                <div className={`p-3 rounded-lg border text-xs flex items-center justify-between ${
-                  art.esElegibleTraspaso
-                    ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
-                    : 'bg-slate-50 border-slate-200 text-slate-700'
-                }`}>
-                  <div className="flex items-center space-x-2">
-                    <Clock className="w-5 h-5 text-[#005a9e]" />
-                    <div>
-                      <span className="font-bold block text-xs">Permanencia en ART Actual</span>
-                      <span className="text-[11px] opacity-80">{art.mesesPermanencia} Meses Cumplidos (Desde {art.fechaInicioContrato})</span>
-                    </div>
-                  </div>
+      {/* Contracts Table */}
+      <div className="bg-white rounded-xl border border-[#c7c7c7] shadow-xs overflow-hidden">
 
-                  {art.esElegibleTraspaso ? (
-                    <span className="text-[10px] bg-emerald-600 text-white font-extrabold px-2 py-1 rounded shadow-xs uppercase">
-                      Elegible Traspaso (Ley 24.557)
-                    </span>
-                  ) : (
-                    <span className="text-[10px] bg-slate-200 text-slate-700 font-bold px-2 py-0.5 rounded">
-                      Req. 12 Meses
-                    </span>
-                  )}
-                </div>
+        <div className="p-3 bg-slate-50 border-b border-[#c7c7c7] text-xs font-bold text-[#6d6e71] flex justify-between items-center">
+          <span>
+            Contratos ART Registrados ({filteredContratosArt.length})
+          </span>
 
-                {/* Clause list */}
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-[#9e9e9e] uppercase block">
-                    Cláusulas de No Repetición Emitidas ({art.clausulasNoRepeticion?.length || 0})
-                  </span>
-                  <div className="flex flex-wrap gap-1">
-                    {art.clausulasNoRepeticion && art.clausulasNoRepeticion.length > 0 ? (
-                      art.clausulasNoRepeticion.map((benef, idx) => (
-                        <span key={idx} className="text-[10px] bg-white border border-[#c7c7c7] text-[#6d6e71] px-2 py-0.5 rounded">
-                          {benef}
+          <span className="font-mono text-[#005a9e]">
+            Supervisión Ley 24.557
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs text-slate-800 min-w-[1250px]">
+
+            <thead className="bg-slate-100/70 border-b border-[#c7c7c7] text-[#6d6e71] font-bold uppercase text-[10px]">
+              <tr>
+                <th className="p-3">N° Contrato</th>
+                <th className="p-3">Empleador / CUIT</th>
+                <th className="p-3">Aseguradora ART</th>
+                <th className="p-3">CIIU / Actividad</th>
+                <th className="p-3">Vigencia Técnica</th>
+                <th className="p-3 text-right">Nómina</th>
+                <th className="p-3 text-right">Masa Salarial</th>
+                <th className="p-3 text-right">Alícuota</th>
+                <th className="p-3 text-center">Permanencia</th>
+                <th className="p-3 text-center">Acciones</th>
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-slate-100 font-medium">
+
+              {filteredContratosArt.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={10}
+                    className="p-8 text-center text-[#9e9e9e]"
+                  >
+                    No se encontraron contratos ART registrados que coincidan con la búsqueda.
+                  </td>
+                </tr>
+              ) : (
+                filteredContratosArt.map((art) => {
+                  const cliente = getCliente(art.clienteId);
+                  const aseguradora = getAseguradora(art.aseguradoraId);
+
+                  return (
+                    <tr
+                      key={art.id}
+                      className="hover:bg-slate-50 transition-colors"
+                    >
+
+                      {/* Contrato */}
+                      <td className="p-3">
+                        <span className="font-bold font-mono text-slate-900 block">
+                          {art.numeroContrato}
                         </span>
-                      ))
-                    ) : (
-                      <span className="text-[10px] text-slate-400 italic">Sin cláusulas emitidas</span>
-                    )}
-                  </div>
-                </div>
 
-              </div>
-              {/* Actions: Modificar & Renovar Contrato */}
-              <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleOpenModificar(art)}
-                  className="bg-slate-100 hover:bg-[#005a9e] hover:text-white text-[#005a9e] text-xs font-bold py-2 px-3 rounded-lg transition-all flex items-center justify-center space-x-1.5 border border-[#c7c7c7] cursor-pointer"
-                >
-                  <Info className="w-3.5 h-3.5" />
-                  <span>Modificar contrato</span>
-                </button>
+                        {art.fechaUltimaRenovacion && (
+                          <span className="text-[10px] text-[#9e9e9e] font-mono block mt-0.5">
+                            Renovado:{' '}
+                            {new Date(
+                              art.fechaUltimaRenovacion
+                            ).toLocaleDateString('es-AR')}
+                          </span>
+                        )}
+                      </td>
 
-                <button
-                  onClick={() => handleOpenRenovar(art)}
-                  className="bg-slate-100 hover:bg-[#005a9e] hover:text-white text-[#005a9e] text-xs font-bold py-2 px-3 rounded-lg transition-all flex items-center justify-center space-x-1.5 border border-[#c7c7c7] cursor-pointer"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Renovar contrato</span>
-                </button>
-              </div>
+                      {/* Empleador */}
+                      <td className="p-3 max-w-[220px]">
+                        <span
+                          className="font-bold text-slate-900 block truncate"
+                          title={cliente?.nombreRazonSocial || 'Empleador'}
+                        >
+                          {cliente?.nombreRazonSocial || 'Empleador'}
+                        </span>
 
-            </div>
-          );
-        })}
+                        <span className="text-[10px] text-[#9e9e9e] font-mono block">
+                          CUIT: {cliente?.cuitCuilDni || '(Sin CUIT)'}
+                        </span>
+                      </td>
+
+                      {/* ART */}
+                      <td className="p-3">
+                        <span className="font-semibold text-[#005a9e] block max-w-[150px] truncate">
+                          {aseguradora?.nombre || 'Aseguradora'}
+                        </span>
+                      </td>
+
+                      {/* Actividad */}
+                      <td
+                        className="p-3 max-w-[240px]"
+                        title={`${art.ciiuActividad || ''} - ${art.descripcionActividad || ''}`}
+                      >
+                        <span className="font-mono font-semibold text-slate-800 block">
+                          {art.ciiuActividad || '—'}
+                        </span>
+
+                        <span className="text-[10px] text-[#6d6e71] block truncate">
+                          {art.descripcionActividad || '—'}
+                        </span>
+                      </td>
+
+                      {/* Vigencia */}
+                      <td className="p-3 text-[11px] font-mono text-[#6d6e71] whitespace-nowrap">
+                        <span className="block text-slate-800">
+                          {art.fechaInicioContrato}
+                        </span>
+
+                        <span className="text-[#9e9e9e]">
+                          al {art.fechaFinContrato || 'S/D'}
+                        </span>
+                      </td>
+
+                      {/* Nómina */}
+                      <td className="p-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
+                        {art.cantidadTrabajadores}
+                        <span className="text-[10px] text-[#9e9e9e] ml-1">
+                          emp.
+                        </span>
+                      </td>
+
+                      {/* Masa Salarial */}
+                      <td className="p-3 text-right font-mono font-bold text-[#005a9e] whitespace-nowrap">
+                        ${art.masaSalarialEstimada.toLocaleString('es-AR')}
+                      </td>
+
+                      {/* Alícuota */}
+                      <td className="p-3 text-right whitespace-nowrap">
+                        <span className="font-mono font-bold text-slate-800 block">
+                          ${art.alicuotaFija}
+                        </span>
+
+                        <span className="text-[10px] text-[#6d6e71] font-mono">
+                          + {art.alicuotaVariable}%
+                        </span>
+                      </td>
+
+                      {/* Permanencia */}
+                      <td className="p-3 text-center">
+
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block ${
+                            art.esElegibleTraspaso
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              : 'bg-slate-100 text-slate-700 border border-slate-200'
+                          }`}
+                        >
+                          {art.mesesPermanencia || 0} meses
+                        </span>
+
+                        {art.esElegibleTraspaso ? (
+                          <span className="text-[9px] text-emerald-700 font-bold block mt-1">
+                            Elegible traspaso
+                          </span>
+                        ) : (
+                          <span className="text-[9px] text-[#9e9e9e] block mt-1">
+                            Requiere 12 meses
+                          </span>
+                        )}
+
+                      </td>
+
+                      {/* Acciones */}
+                      <td className="p-3 text-center">
+                        <div className="flex flex-col gap-1.5 min-w-[130px]">
+
+                          <button
+                            type="button"
+                            onClick={() => handleOpenModificar(art)}
+                            className="bg-slate-100 hover:bg-[#005a9e] hover:text-white text-[#005a9e] text-[10px] font-bold py-1.5 px-2 rounded-lg transition-all flex items-center justify-center space-x-1 border border-[#c7c7c7] cursor-pointer"
+                          >
+                            <Info className="w-3.5 h-3.5" />
+                            <span>Modificar</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleOpenRenovar(art)}
+                            className="bg-slate-100 hover:bg-[#005a9e] hover:text-white text-[#005a9e] text-[10px] font-bold py-1.5 px-2 rounded-lg transition-all flex items-center justify-center space-x-1 border border-[#c7c7c7] cursor-pointer"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>Renovar</span>
+                          </button>
+
+                        </div>
+                      </td>
+
+                    </tr>
+                  );
+                })
+              )}
+
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* ============================================================= */}
       {/* MODAL: RENOVAR CONTRATO ART */}
       {/* ============================================================= */}
+
       {showRenewalModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+
           <div className="bg-white rounded-xl border border-[#c7c7c7] shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
+
             <div className="flex justify-between items-center border-b border-slate-200 pb-3">
               <div className="flex items-center space-x-2">
                 <RotateCcw className="w-5 h-5 text-[#005a9e]" />
+
                 <h3 className="text-base font-bold text-slate-900">
                   Renovación de Contrato ART
                 </h3>
               </div>
+
               <button
                 onClick={() => setShowRenewalModal(null)}
                 className="text-[#9e9e9e] hover:text-slate-900 font-bold text-lg cursor-pointer"
@@ -402,95 +570,144 @@ export const ArtView: React.FC<ArtViewProps> = ({
               </button>
             </div>
 
-            {/* Informative Header Banner */}
             <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-lg flex items-start space-x-2 text-xs text-slate-700">
               <Info className="w-4 h-4 text-[#005a9e] flex-shrink-0 mt-0.5" />
+
               <p>
                 La renovación actualiza las fechas de vigencia del contrato manteniendo el mismo número y conservando como referencia los datos registrados al momento del alta.
               </p>
             </div>
 
-            {/* Read-only Reference Information */}
             <div className="space-y-2">
+
               <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
                 Datos de Referencia del Contrato (No Modificables)
               </span>
+
               <div className="p-3 bg-slate-50 border border-[#c7c7c7] rounded-lg text-xs space-y-2.5">
+
                 <div className="grid grid-cols-2 gap-2">
+
                   <div>
-                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">Empleador / Cliente</span>
+                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">
+                      Empleador / Cliente
+                    </span>
+
                     <span className="font-bold text-slate-900 block">
                       {getCliente(showRenewalModal.clienteId)?.nombreRazonSocial || 'Empleador'}
                     </span>
+
                     <span className="text-[10px] text-slate-500 font-mono">
                       CUIT: {getCliente(showRenewalModal.clienteId)?.cuitCuilDni}
                     </span>
                   </div>
+
                   <div>
-                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">Aseguradora ART</span>
+                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">
+                      Aseguradora ART
+                    </span>
+
                     <span className="font-bold text-[#005a9e] block">
                       {getAseguradora(showRenewalModal.aseguradoraId)?.nombre || 'Aseguradora'}
                     </span>
                   </div>
+
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 border-t border-slate-200 pt-2">
+
                   <div>
-                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">Número de Contrato</span>
+                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">
+                      Número de Contrato
+                    </span>
+
                     <span className="font-mono font-bold text-slate-800">
                       {showRenewalModal.numeroContrato}
                     </span>
                   </div>
+
                   <div>
-                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">CIIU / Actividad</span>
+                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">
+                      CIIU / Actividad
+                    </span>
+
                     <span className="text-slate-800">
                       {showRenewalModal.ciiuActividad} - {showRenewalModal.descripcionActividad}
                     </span>
                   </div>
+
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 border-t border-slate-200 pt-2">
+
                   <div>
-                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">Nómina</span>
+                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">
+                      Nómina
+                    </span>
+
                     <span className="font-mono font-bold text-slate-800">
                       {showRenewalModal.cantidadTrabajadores} Empleados
                     </span>
                   </div>
+
                   <div>
-                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">Masa Salarial</span>
+                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">
+                      Masa Salarial
+                    </span>
+
                     <span className="font-mono font-bold text-[#005a9e]">
                       ${showRenewalModal.masaSalarialEstimada.toLocaleString('es-AR')}
                     </span>
                   </div>
+
                   <div>
-                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">Alícuotas</span>
+                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">
+                      Alícuotas
+                    </span>
+
                     <span className="font-mono font-bold text-slate-800">
                       ${showRenewalModal.alicuotaFija} + {showRenewalModal.alicuotaVariable}%
                     </span>
                   </div>
+
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 border-t border-slate-200 pt-2">
+
                   <div>
-                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">Fecha Inicio Original (Antigüedad)</span>
+                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">
+                      Fecha Inicio Original (Antigüedad)
+                    </span>
+
                     <span className="font-mono font-semibold text-slate-800">
                       {showRenewalModal.fechaInicioContrato}
                     </span>
                   </div>
+
                   <div>
-                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">Última Renovación</span>
+                    <span className="text-[#9e9e9e] block text-[10px] uppercase font-bold">
+                      Última Renovación
+                    </span>
+
                     <span className="font-mono font-semibold text-slate-800">
                       {showRenewalModal.fechaUltimaRenovacion
-                        ? new Date(showRenewalModal.fechaUltimaRenovacion).toLocaleString('es-AR')
+                        ? new Date(
+                            showRenewalModal.fechaUltimaRenovacion
+                          ).toLocaleString('es-AR')
                         : 'Sin renovaciones previas'}
                     </span>
                   </div>
+
                 </div>
+
               </div>
             </div>
 
-            {/* Renewal Form: ONLY editable fields are new start and end dates */}
-            <form onSubmit={handleRenewalSubmit} className="space-y-4 text-xs pt-1">
+            <form
+              onSubmit={handleRenewalSubmit}
+              className="space-y-4 text-xs pt-1"
+            >
+
               {renewalError && (
                 <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 font-semibold rounded-lg flex items-center space-x-1.5 text-xs">
                   <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
@@ -499,23 +716,31 @@ export const ArtView: React.FC<ArtViewProps> = ({
               )}
 
               <div className="space-y-1">
+
                 <span className="text-[11px] font-bold text-slate-900 uppercase tracking-wider block">
                   Nueva Vigencia del Contrato
                 </span>
+
                 <p className="text-[11px] text-[#6d6e71]">
                   Ingrese el nuevo período de vigencia acordado para este contrato.
                 </p>
+
               </div>
 
               <div className="grid grid-cols-2 gap-3 bg-blue-50/40 p-3 rounded-lg border border-blue-200">
+
                 <div>
                   <label className="font-bold text-slate-800 block mb-1">
-                    Nueva Fecha de Inicio <span className="text-red-500">*</span>
+                    Nueva Fecha de Inicio{' '}
+                    <span className="text-red-500">*</span>
                   </label>
+
                   <input
                     type="date"
                     value={renovacionFechaInicio}
-                    onChange={(e) => setRenovacionFechaInicio(e.target.value)}
+                    onChange={(e) =>
+                      setRenovacionFechaInicio(e.target.value)
+                    }
                     className="w-full p-2 bg-white border border-[#005a9e] rounded-lg font-mono text-xs focus:ring-2 focus:ring-[#005a9e]"
                     required
                   />
@@ -523,19 +748,25 @@ export const ArtView: React.FC<ArtViewProps> = ({
 
                 <div>
                   <label className="font-bold text-slate-800 block mb-1">
-                    Nueva Fecha de Fin <span className="text-red-500">*</span>
+                    Nueva Fecha de Fin{' '}
+                    <span className="text-red-500">*</span>
                   </label>
+
                   <input
                     type="date"
                     value={renovacionFechaFin}
-                    onChange={(e) => setRenovacionFechaFin(e.target.value)}
+                    onChange={(e) =>
+                      setRenovacionFechaFin(e.target.value)
+                    }
                     className="w-full p-2 bg-white border border-[#005a9e] rounded-lg font-mono text-xs focus:ring-2 focus:ring-[#005a9e]"
                     required
                   />
                 </div>
+
               </div>
 
               <div className="pt-3 border-t border-slate-200 flex justify-end space-x-2">
+
                 <button
                   type="button"
                   onClick={() => setShowRenewalModal(null)}
@@ -543,6 +774,7 @@ export const ArtView: React.FC<ArtViewProps> = ({
                 >
                   Cancelar
                 </button>
+
                 <button
                   type="submit"
                   className="px-4 py-2 bg-[#005a9e] hover:bg-[#007bc1] text-white font-bold rounded-lg shadow-sm transition-all flex items-center space-x-1.5 cursor-pointer"
@@ -550,22 +782,31 @@ export const ArtView: React.FC<ArtViewProps> = ({
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Confirmar Renovación</span>
                 </button>
+
               </div>
+
             </form>
           </div>
         </div>
       )}
 
       {/* ============================================================= */}
-      {/* MODAL NUEVO CONTRATO ART (ALTA) */}
+      {/* MODAL NUEVO / MODIFICAR CONTRATO ART */}
       {/* ============================================================= */}
+
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+
           <div className="bg-white rounded-xl border border-[#c7c7c7] shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
+
             <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+
               <h3 className="text-base font-bold text-slate-900">
-                {editingContrato ? 'Modificar Contrato ART' : 'Alta de Contrato ART (Proceso 5)'}
+                {editingContrato
+                  ? 'Modificar Contrato ART'
+                  : 'Alta de Contrato ART (Proceso 5)'}
               </h3>
+
               <button
                 onClick={() => {
                   setShowModal(false);
@@ -575,10 +816,14 @@ export const ArtView: React.FC<ArtViewProps> = ({
               >
                 ×
               </button>
+
             </div>
 
-            <form onSubmit={handleAltaSubmit} className="space-y-3.5 text-xs">
-              {/* Error feedback banner */}
+            <form
+              onSubmit={handleAltaSubmit}
+              className="space-y-3.5 text-xs"
+            >
+
               {altaError && (
                 <div className="p-3 bg-red-50 border border-red-200 text-red-700 font-semibold rounded-lg flex items-start space-x-2 text-xs">
                   <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
@@ -588,10 +833,13 @@ export const ArtView: React.FC<ArtViewProps> = ({
 
               {/* Empleador & Aseguradora */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">
-                    Empleador / Cliente <span className="text-red-500">*</span>
+                    Empleador / Cliente{' '}
+                    <span className="text-red-500">*</span>
                   </label>
+
                   <select
                     value={empresaClienteId}
                     onChange={(e) => {
@@ -602,46 +850,65 @@ export const ArtView: React.FC<ArtViewProps> = ({
                     required
                   >
                     {clientes.map((c) => (
-                      <option key={c.id} value={c.id}>{c.nombreRazonSocial}</option>
+                      <option key={c.id} value={c.id}>
+                        {c.nombreRazonSocial}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">
-                    Aseguradora ART <span className="text-red-500">*</span>
+                    Aseguradora ART{' '}
+                    <span className="text-red-500">*</span>
                   </label>
+
                   <select
                     value={artAseguradoraId}
-                    onChange={(e) => setArtAseguradoraId(e.target.value)}
+                    onChange={(e) =>
+                      setArtAseguradoraId(e.target.value)
+                    }
                     className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg focus:ring-2 focus:ring-[#005a9e]"
                     required
                   >
                     {aseguradoras.map((a) => (
-                      <option key={a.id} value={a.id}>{a.nombre}</option>
+                      <option key={a.id} value={a.id}>
+                        {a.nombre}
+                      </option>
                     ))}
                   </select>
                 </div>
+
               </div>
 
-              {/* CAMBIO 1 — CUIT DEL TITULAR DEL CONTRATO */}
+              {/* CUIT del titular */}
               {(() => {
                 const titular = getCliente(empresaClienteId);
                 const cuitTitular = titular?.cuitCuilDni || '';
-                const validation = validateCuitCuil(cuitTitular.replace(/\D/g, ''));
+
+                const validation = validateCuitCuil(
+                  cuitTitular.replace(/\D/g, '')
+                );
+
                 return (
-                  <div className={`p-2.5 rounded-lg border text-xs flex items-center justify-between transition-all ${
-                    validation.isValid
-                      ? 'bg-blue-50/50 border-blue-200 text-slate-800'
-                      : 'bg-amber-50 border-amber-300 text-amber-900'
-                  }`}>
+                  <div
+                    className={`p-2.5 rounded-lg border text-xs flex items-center justify-between transition-all ${
+                      validation.isValid
+                        ? 'bg-blue-50/50 border-blue-200 text-slate-800'
+                        : 'bg-amber-50 border-amber-300 text-amber-900'
+                    }`}
+                  >
+
                     <div className="space-y-0.5">
+
                       <span className="text-[10px] font-bold uppercase tracking-wider text-[#005a9e] block">
                         CUIT del titular del contrato
                       </span>
+
                       <span className="font-mono font-bold text-sm text-slate-900 block">
                         {cuitTitular || '(Sin CUIT registrado)'}
                       </span>
+
                     </div>
 
                     <div>
@@ -657,16 +924,20 @@ export const ArtView: React.FC<ArtViewProps> = ({
                         </span>
                       )}
                     </div>
+
                   </div>
                 );
               })()}
 
-              {/* CAMBIO 3 — NÚMERO DE CONTRATO MÁS GRANDE & CIIU */}
+              {/* Número de contrato & CIIU */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+
                 <div>
                   <label className="font-bold text-slate-900 block mb-1 text-xs">
-                    N° Contrato ART <span className="text-red-500">*</span>
+                    N° Contrato ART{' '}
+                    <span className="text-red-500">*</span>
                   </label>
+
                   <input
                     type="text"
                     placeholder="ART-12345"
@@ -678,13 +949,18 @@ export const ArtView: React.FC<ArtViewProps> = ({
                     className="w-full px-3.5 py-2.5 bg-white border-2 border-[#005a9e]/40 focus:border-[#005a9e] rounded-lg font-mono font-bold text-base text-slate-900 tracking-wider shadow-xs focus:ring-2 focus:ring-[#005a9e]/20 outline-none"
                     required
                   />
-                  <span className="text-[10px] text-[#6d6e71] mt-0.5 block">Identificador del contrato</span>
+
+                  <span className="text-[10px] text-[#6d6e71] mt-0.5 block">
+                    Identificador del contrato
+                  </span>
                 </div>
 
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">
-                    CIIU Actividad <span className="text-red-500">*</span>
+                    CIIU Actividad{' '}
+                    <span className="text-red-500">*</span>
                   </label>
+
                   <input
                     type="text"
                     value={ciiu}
@@ -694,13 +970,17 @@ export const ArtView: React.FC<ArtViewProps> = ({
                     required
                   />
                 </div>
+
               </div>
 
               {/* Actividad */}
               <div>
+
                 <label className="font-bold text-slate-700 block mb-1">
-                  Descripción Actividad <span className="text-red-500">*</span>
+                  Descripción Actividad{' '}
+                  <span className="text-red-500">*</span>
                 </label>
+
                 <input
                   type="text"
                   value={actividad}
@@ -709,14 +989,18 @@ export const ArtView: React.FC<ArtViewProps> = ({
                   placeholder="Ej: Transporte Automotor de Cargas Generales"
                   required
                 />
+
               </div>
 
-              {/* Fechas de Vigencia Inicio y Fin */}
+              {/* Fechas */}
               <div className="grid grid-cols-2 gap-3">
+
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">
-                    Fecha Inicio Vigencia <span className="text-red-500">*</span>
+                    Fecha Inicio Vigencia{' '}
+                    <span className="text-red-500">*</span>
                   </label>
+
                   <input
                     type="date"
                     value={fechaInicio}
@@ -728,8 +1012,10 @@ export const ArtView: React.FC<ArtViewProps> = ({
 
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">
-                    Fecha Fin Vigencia <span className="text-red-500">*</span>
+                    Fecha Fin Vigencia{' '}
+                    <span className="text-red-500">*</span>
                   </label>
+
                   <input
                     type="date"
                     value={fechaFin}
@@ -738,18 +1024,24 @@ export const ArtView: React.FC<ArtViewProps> = ({
                     required
                   />
                 </div>
+
               </div>
 
               {/* Masa Salarial & Trabajadores */}
               <div className="grid grid-cols-2 gap-3">
+
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">
-                    Masa Salarial Estimada (ARS) <span className="text-red-500">*</span>
+                    Masa Salarial Estimada (ARS){' '}
+                    <span className="text-red-500">*</span>
                   </label>
+
                   <input
                     type="number"
                     value={masaSalarial}
-                    onChange={(e) => setMasaSalarial(Number(e.target.value))}
+                    onChange={(e) =>
+                      setMasaSalarial(Number(e.target.value))
+                    }
                     className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg font-mono"
                     min="0"
                     required
@@ -758,30 +1050,40 @@ export const ArtView: React.FC<ArtViewProps> = ({
 
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">
-                    Cantidad de Trabajadores <span className="text-red-500">*</span>
+                    Cantidad de Trabajadores{' '}
+                    <span className="text-red-500">*</span>
                   </label>
+
                   <input
                     type="number"
                     value={trabajadores}
-                    onChange={(e) => setTrabajadores(Number(e.target.value))}
+                    onChange={(e) =>
+                      setTrabajadores(Number(e.target.value))
+                    }
                     className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg font-mono"
                     min="1"
                     required
                   />
                 </div>
+
               </div>
 
-              {/* Alícuota Fija & Alícuota Variable */}
+              {/* Alícuotas */}
               <div className="grid grid-cols-2 gap-3">
+
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">
-                    Alícuota Fija (ARS / Cápita) <span className="text-red-500">*</span>
+                    Alícuota Fija (ARS / Cápita){' '}
+                    <span className="text-red-500">*</span>
                   </label>
+
                   <input
                     type="number"
                     step="0.01"
                     value={alicuotaFija}
-                    onChange={(e) => setAlicuotaFija(Number(e.target.value))}
+                    onChange={(e) =>
+                      setAlicuotaFija(Number(e.target.value))
+                    }
                     className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg font-mono"
                     min="0"
                     required
@@ -790,35 +1092,49 @@ export const ArtView: React.FC<ArtViewProps> = ({
 
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">
-                    Alícuota Variable (%) <span className="text-red-500">*</span>
+                    Alícuota Variable (%){' '}
+                    <span className="text-red-500">*</span>
                   </label>
+
                   <input
                     type="number"
                     step="0.01"
                     value={alicuotaVar}
-                    onChange={(e) => setAlicuotaVar(Number(e.target.value))}
+                    onChange={(e) =>
+                      setAlicuotaVar(Number(e.target.value))
+                    }
                     className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg font-mono"
                     min="0"
                     required
                   />
                 </div>
+
               </div>
 
               <div className="pt-3 border-t border-slate-200 flex justify-end space-x-2">
+
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditingContrato(null);
+                  }}
                   className="px-4 py-2 border border-[#c7c7c7] text-[#6d6e71] rounded-lg hover:bg-slate-50 cursor-pointer font-semibold"
                 >
                   Cancelar
                 </button>
+
                 <button
                   type="submit"
                   className="px-4 py-2 bg-[#005a9e] hover:bg-[#007bc1] text-white font-bold rounded-lg shadow-sm cursor-pointer"
                 >
-                  {editingContrato ? 'Guardar Cambios' : 'Guardar Contrato ART'}
+                  {editingContrato
+                    ? 'Guardar Cambios'
+                    : 'Guardar Contrato ART'}
                 </button>
+
               </div>
+
             </form>
           </div>
         </div>
