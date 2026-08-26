@@ -4,11 +4,8 @@ import { validateCuitCuil } from '../utils/clienteValidations';
 import {
   Briefcase,
   Plus,
-  ShieldCheck,
-  Download,
   AlertCircle,
   Clock,
-  FileCheck,
   CheckCircle2,
   RotateCcw,
   Calendar,
@@ -32,11 +29,11 @@ export const ArtView: React.FC<ArtViewProps> = ({
   onUpdateContratoArt
 }) => {
   const [showModal, setShowModal] = useState(false);
-  const [showCertificateModal, setShowCertificateModal] = useState<ContratoART | null>(null);
+  const [editingContrato, setEditingContrato] = useState<ContratoART | null>(null);
   const [showRenewalModal, setShowRenewalModal] = useState<ContratoART | null>(null);
   const [altaError, setAltaError] = useState<string | null>(null);
 
-  // Form State for Alta de Contrato ART
+  // Form State for Alta / Modificación de Contrato ART
   const [empresaClienteId, setEmpresaClienteId] = useState(clientes[0]?.id || '');
   const [artAseguradoraId, setArtAseguradoraId] = useState(aseguradoras[0]?.id || '');
   const [numContrato, setNumContrato] = useState('');
@@ -54,13 +51,12 @@ export const ArtView: React.FC<ArtViewProps> = ({
   const [renovacionFechaFin, setRenovacionFechaFin] = useState('');
   const [renewalError, setRenewalError] = useState<string | null>(null);
 
-  // Beneficiary input for Non-Repetition clause
-  const [cuitBeneficiario, setCuitBeneficiario] = useState('');
 
   const getCliente = (id: string) => clientes.find((c) => c.id === id);
   const getAseguradora = (id: string) => aseguradoras.find((a) => a.id === id);
 
   const handleOpenAlta = () => {
+    setEditingContrato(null);
     setEmpresaClienteId(clientes[0]?.id || '');
     setArtAseguradoraId(aseguradoras[0]?.id || '');
     setNumContrato('');
@@ -76,6 +72,22 @@ export const ArtView: React.FC<ArtViewProps> = ({
     setShowModal(true);
   };
 
+  const handleOpenModificar = (art: ContratoART) => {
+    setEditingContrato(art);
+    setEmpresaClienteId(art.clienteId);
+    setArtAseguradoraId(art.aseguradoraId);
+    setNumContrato(art.numeroContrato);
+    setCiiu(art.ciiuActividad || '');
+    setActividad(art.descripcionActividad || '');
+    setMasaSalarial(art.masaSalarialEstimada);
+    setTrabajadores(art.cantidadTrabajadores);
+    setAlicuotaFija(art.alicuotaFija);
+    setAlicuotaVar(art.alicuotaVariable);
+    setFechaInicio(art.fechaInicioContrato);
+    setFechaFin(art.fechaFinContrato || '');
+    setAltaError(null);
+    setShowModal(true);
+  };
   const handleAltaSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setAltaError(null);
@@ -95,7 +107,7 @@ export const ArtView: React.FC<ArtViewProps> = ({
     const cuitTitularRaw = selectedCliente.cuitCuilDni || '';
     const cleanCuitTitular = cuitTitularRaw.replace(/\D/g, '');
 
-    // Validar formato de CUIT argentino (11 dígitos y dígito verificador algoritmo AFIP Módulo 11)
+    // Validar formato de CUIT argentino
     const cuitValidation = validateCuitCuil(cleanCuitTitular);
     if (!cuitValidation.isValid) {
       setAltaError(
@@ -104,10 +116,16 @@ export const ArtView: React.FC<ArtViewProps> = ({
       return;
     }
 
-    // 2. Regla de negocio: Un único contrato ART por CUIT de titular
+    // 2. Regla de negocio: un único contrato ART por CUIT de titular.
+    // Al modificar, se excluye el propio contrato para no bloquearse a sí mismo.
     const contratoExistentePorCuit = contratosArt.find((art) => {
+      if (editingContrato && art.id === editingContrato.id) {
+        return false;
+      }
+
       const clienteDeContrato = getCliente(art.clienteId);
       if (!clienteDeContrato || !clienteDeContrato.cuitCuilDni) return false;
+
       const cleanCuitExistente = clienteDeContrato.cuitCuilDni.replace(/\D/g, '');
       return cleanCuitExistente === cleanCuitTitular;
     });
@@ -120,7 +138,7 @@ export const ArtView: React.FC<ArtViewProps> = ({
       return;
     }
 
-    onAddContratoArt({
+    const datosContrato = {
       numeroContrato: numContrato.trim(),
       clienteId: empresaClienteId,
       aseguradoraId: artAseguradoraId,
@@ -131,15 +149,31 @@ export const ArtView: React.FC<ArtViewProps> = ({
       alicuotaFija: Number(alicuotaFija),
       alicuotaVariable: Number(alicuotaVar),
       fechaInicioContrato: fechaInicio,
-      fechaFinContrato: fechaFin,
-      clausulasNoRepeticion: []
-    });
+      fechaFinContrato: fechaFin
+    };
+
+    if (editingContrato) {
+      // Modificación: conserva los datos históricos que no forman parte
+      // del formulario de edición.
+      const contratoActualizado: ContratoART = {
+        ...editingContrato,
+        ...datosContrato
+      };
+
+      onUpdateContratoArt(contratoActualizado);
+      setEditingContrato(null);
+    } else {
+      // Alta: crea un contrato nuevo sin datos históricos previos.
+      onAddContratoArt({
+        ...datosContrato,
+        clausulasNoRepeticion: []
+      });
+    }
 
     setNumContrato('');
     setAltaError(null);
     setShowModal(false);
   };
-
   const handleOpenRenovar = (art: ContratoART) => {
     setShowRenewalModal(art);
     setRenovacionFechaInicio(art.fechaFinContrato || art.fechaInicioContrato);
@@ -191,23 +225,6 @@ export const ArtView: React.FC<ArtViewProps> = ({
 
     onUpdateContratoArt(contratoActualizado);
     setShowRenewalModal(null);
-  };
-
-  const handleAddClausula = (contratoId: string) => {
-    if (!cuitBeneficiario.trim()) return;
-    const contrato = contratosArt.find((c) => c.id === contratoId);
-    if (contrato) {
-      const updatedClausulas = [...contrato.clausulasNoRepeticion, cuitBeneficiario.trim()];
-      const updatedContrato: ContratoART = {
-        ...contrato,
-        clausulasNoRepeticion: updatedClausulas
-      };
-      onUpdateContratoArt(updatedContrato);
-      setCuitBeneficiario('');
-      if (showCertificateModal && showCertificateModal.id === contratoId) {
-        setShowCertificateModal(updatedContrato);
-      }
-    }
   };
 
   return (
@@ -340,23 +357,22 @@ export const ArtView: React.FC<ArtViewProps> = ({
                 </div>
 
               </div>
-
-              {/* Actions: Renovar Contrato & Emit Certificate */}
+              {/* Actions: Modificar & Renovar Contrato */}
               <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  onClick={() => handleOpenModificar(art)}
+                  className="bg-slate-100 hover:bg-[#005a9e] hover:text-white text-[#005a9e] text-xs font-bold py-2 px-3 rounded-lg transition-all flex items-center justify-center space-x-1.5 border border-[#c7c7c7] cursor-pointer"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                  <span>Modificar contrato</span>
+                </button>
+
                 <button
                   onClick={() => handleOpenRenovar(art)}
                   className="bg-slate-100 hover:bg-[#005a9e] hover:text-white text-[#005a9e] text-xs font-bold py-2 px-3 rounded-lg transition-all flex items-center justify-center space-x-1.5 border border-[#c7c7c7] cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   <span>Renovar contrato</span>
-                </button>
-
-                <button
-                  onClick={() => setShowCertificateModal(art)}
-                  className="bg-slate-100 hover:bg-[#005a9e] hover:text-white text-[#005a9e] text-xs font-bold py-2 px-3 rounded-lg transition-all flex items-center justify-center space-x-1.5 border border-[#c7c7c7] cursor-pointer"
-                >
-                  <FileCheck className="w-3.5 h-3.5" />
-                  <span>Certificado Cobertura</span>
                 </button>
               </div>
 
@@ -382,7 +398,7 @@ export const ArtView: React.FC<ArtViewProps> = ({
                 onClick={() => setShowRenewalModal(null)}
                 className="text-[#9e9e9e] hover:text-slate-900 font-bold text-lg cursor-pointer"
               >
-                ✕
+                ×
               </button>
             </div>
 
@@ -541,107 +557,23 @@ export const ArtView: React.FC<ArtViewProps> = ({
       )}
 
       {/* ============================================================= */}
-      {/* MODAL CERTIFICADO DE COBERTURA */}
-      {/* ============================================================= */}
-      {showCertificateModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl border border-[#c7c7c7] shadow-xl max-w-lg w-full p-6 space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-200 pb-3">
-              <div className="flex items-center space-x-2">
-                <ShieldCheck className="w-5 h-5 text-[#005a9e]" />
-                <h3 className="text-base font-bold text-slate-900">Emisión de Certificado de Cobertura</h3>
-              </div>
-              <button
-                onClick={() => setShowCertificateModal(null)}
-                className="text-[#9e9e9e] hover:text-slate-900 font-bold text-lg cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="p-4 bg-slate-50 border border-[#c7c7c7] rounded-lg text-xs space-y-2 font-serif leading-relaxed text-slate-800">
-              <p className="font-sans font-bold text-[#005a9e] text-center uppercase tracking-wide border-b border-slate-200 pb-2">
-                Certificado de Cobertura ART con Cláusula de No Repetición
-              </p>
-              <p>
-                Por la presente se certifica que la empresa <strong className="font-sans">{getCliente(showCertificateModal.clienteId)?.nombreRazonSocial}</strong> (CUIT: {getCliente(showCertificateModal.clienteId)?.cuitCuilDni}) posee contrato de cobertura por Riesgos del Trabajo N° <strong className="font-mono">{showCertificateModal.numeroContrato}</strong> emitido por la aseguradora <strong className="font-sans">{getAseguradora(showCertificateModal.aseguradoraId)?.nombre}</strong> con vigencia desde el <strong className="font-mono">{showCertificateModal.fechaInicioContrato}</strong> hasta el <strong className="font-mono">{showCertificateModal.fechaFinContrato || 'S/D'}</strong>.
-              </p>
-              <p>
-                Se incluye expresamente la <strong>Cláusula de No Repetición</strong> a favor de los siguientes terceros contratantes beneficiarios:
-              </p>
-
-              <div className="p-2 bg-white border border-slate-200 rounded font-sans text-[11px] font-mono space-y-1">
-                {showCertificateModal.clausulasNoRepeticion && showCertificateModal.clausulasNoRepeticion.length > 0 ? (
-                  showCertificateModal.clausulasNoRepeticion.map((c, i) => (
-                    <div key={i} className="flex items-center space-x-1.5 text-slate-800">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                      <span>{c}</span>
-                    </div>
-                  ))
-                ) : (
-                  <span className="text-slate-400 italic text-[10px]">Sin beneficiarios registrados</span>
-                )}
-              </div>
-            </div>
-
-            {/* Form Add beneficiary */}
-            <div className="space-y-2 text-xs">
-              <label className="font-bold text-slate-700 block">Agregar Nuevo Beneficiario (CUIT / Razón Social):</label>
-              <div className="flex space-x-2">
-                <input
-                  type="text"
-                  placeholder="30-99998888-7 (Cliente Contratante S.A.)"
-                  value={cuitBeneficiario}
-                  onChange={(e) => setCuitBeneficiario(e.target.value)}
-                  className="flex-1 p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg font-mono text-xs"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleAddClausula(showCertificateModal.id)}
-                  className="bg-[#005a9e] hover:bg-[#007bc1] text-white px-3 py-2 rounded-lg font-bold cursor-pointer transition-all"
-                >
-                  Agregar
-                </button>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-slate-200 flex justify-end space-x-2">
-              <button
-                type="button"
-                onClick={() => setShowCertificateModal(null)}
-                className="px-4 py-2 border border-[#c7c7c7] text-[#6d6e71] rounded-lg hover:bg-slate-50 text-xs cursor-pointer"
-              >
-                Cerrar
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  alert(`Certificado PDF generado exitosamente para ${getCliente(showCertificateModal.clienteId)?.nombreRazonSocial}`);
-                  setShowCertificateModal(null);
-                }}
-                className="px-4 py-2 bg-[#005a9e] text-white font-bold rounded-lg hover:bg-[#007bc1] text-xs flex items-center space-x-1.5 cursor-pointer"
-              >
-                <Download className="w-4 h-4" />
-                <span>Descargar PDF</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================= */}
       {/* MODAL NUEVO CONTRATO ART (ALTA) */}
       {/* ============================================================= */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl border border-[#c7c7c7] shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
             <div className="flex justify-between items-center border-b border-slate-200 pb-3">
-              <h3 className="text-base font-bold text-slate-900">Alta de Contrato ART (Proceso 5)</h3>
+              <h3 className="text-base font-bold text-slate-900">
+                {editingContrato ? 'Modificar Contrato ART' : 'Alta de Contrato ART (Proceso 5)'}
+              </h3>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  setEditingContrato(null);
+                }}
                 className="text-[#9e9e9e] hover:text-slate-900 font-bold text-lg cursor-pointer"
               >
-                ✕
+                ×
               </button>
             </div>
 
@@ -884,7 +816,7 @@ export const ArtView: React.FC<ArtViewProps> = ({
                   type="submit"
                   className="px-4 py-2 bg-[#005a9e] hover:bg-[#007bc1] text-white font-bold rounded-lg shadow-sm cursor-pointer"
                 >
-                  Guardar Contrato ART
+                  {editingContrato ? 'Guardar Cambios' : 'Guardar Contrato ART'}
                 </button>
               </div>
             </form>
