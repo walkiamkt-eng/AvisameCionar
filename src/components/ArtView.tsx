@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ContratoART, Cliente, Aseguradora } from '../types';
+import { validateCuitCuil } from '../utils/clienteValidations';
 import {
   Briefcase,
   Plus,
@@ -33,6 +34,7 @@ export const ArtView: React.FC<ArtViewProps> = ({
   const [showModal, setShowModal] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState<ContratoART | null>(null);
   const [showRenewalModal, setShowRenewalModal] = useState<ContratoART | null>(null);
+  const [altaError, setAltaError] = useState<string | null>(null);
 
   // Form State for Alta de Contrato ART
   const [empresaClienteId, setEmpresaClienteId] = useState(clientes[0]?.id || '');
@@ -70,12 +72,53 @@ export const ArtView: React.FC<ArtViewProps> = ({
     setAlicuotaVar(3.0);
     setFechaInicio('2026-01-01');
     setFechaFin('2027-01-01');
+    setAltaError(null);
     setShowModal(true);
   };
 
   const handleAltaSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!numContrato.trim()) return;
+    setAltaError(null);
+
+    if (!numContrato.trim()) {
+      setAltaError('El número de contrato ART es obligatorio.');
+      return;
+    }
+
+    // 1. Obtener cliente seleccionado y validar CUIT del titular
+    const selectedCliente = getCliente(empresaClienteId);
+    if (!selectedCliente) {
+      setAltaError('Debe seleccionar un Empleador / Cliente titular del contrato.');
+      return;
+    }
+
+    const cuitTitularRaw = selectedCliente.cuitCuilDni || '';
+    const cleanCuitTitular = cuitTitularRaw.replace(/\D/g, '');
+
+    // Validar formato de CUIT argentino (11 dígitos y dígito verificador algoritmo AFIP Módulo 11)
+    const cuitValidation = validateCuitCuil(cleanCuitTitular);
+    if (!cuitValidation.isValid) {
+      setAltaError(
+        `El CUIT del titular "${selectedCliente.nombreRazonSocial}" es inválido: ${cuitValidation.error || 'Debe ser un CUIT argentino válido de 11 dígitos con dígito verificador correcto'}. Corrija el documento del cliente antes de registrar el contrato ART.`
+      );
+      return;
+    }
+
+    // 2. Regla de negocio: Un único contrato ART por CUIT de titular
+    const contratoExistentePorCuit = contratosArt.find((art) => {
+      const clienteDeContrato = getCliente(art.clienteId);
+      if (!clienteDeContrato || !clienteDeContrato.cuitCuilDni) return false;
+      const cleanCuitExistente = clienteDeContrato.cuitCuilDni.replace(/\D/g, '');
+      return cleanCuitExistente === cleanCuitTitular;
+    });
+
+    if (contratoExistentePorCuit) {
+      const clienteExistente = getCliente(contratoExistentePorCuit.clienteId);
+      setAltaError(
+        `El CUIT titular ${cuitTitularRaw} (${selectedCliente.nombreRazonSocial}) ya posee un contrato ART registrado en el sistema (Contrato N° ${contratoExistentePorCuit.numeroContrato} - ${clienteExistente?.nombreRazonSocial || 'Titular'}). Solo se permite un único contrato ART por CUIT de titular.`
+      );
+      return;
+    }
 
     onAddContratoArt({
       numeroContrato: numContrato.trim(),
@@ -93,6 +136,7 @@ export const ArtView: React.FC<ArtViewProps> = ({
     });
 
     setNumContrato('');
+    setAltaError(null);
     setShowModal(false);
   };
 
@@ -203,7 +247,7 @@ export const ArtView: React.FC<ArtViewProps> = ({
                 {/* Title & Status */}
                 <div className="flex justify-between items-start gap-2 border-b border-slate-100 pb-3">
                   <div>
-                    <span className="text-[10px] font-mono font-bold text-[#007bc1] bg-[#005a9e]/10 px-2 py-0.5 rounded">
+                    <span className="text-base font-mono font-bold text-[#007bc1] bg-[#005a9e]/10 px-2 py-0.5 rounded mb-1">
                       Contrato N° {art.numeroContrato}
                     </span>
                     <h3 className="text-base font-bold text-slate-900 mt-1">{cliente?.nombreRazonSocial || 'Empleador'}</h3>
@@ -601,17 +645,28 @@ export const ArtView: React.FC<ArtViewProps> = ({
               </button>
             </div>
 
-            <form onSubmit={handleAltaSubmit} className="space-y-3 text-xs">
+            <form onSubmit={handleAltaSubmit} className="space-y-3.5 text-xs">
+              {/* Error feedback banner */}
+              {altaError && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 font-semibold rounded-lg flex items-start space-x-2 text-xs">
+                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                  <span>{altaError}</span>
+                </div>
+              )}
+
               {/* Empleador & Aseguradora */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">
                     Empleador / Cliente <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={empresaClienteId}
-                    onChange={(e) => setEmpresaClienteId(e.target.value)}
-                    className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg"
+                    onChange={(e) => {
+                      setEmpresaClienteId(e.target.value);
+                      setAltaError(null);
+                    }}
+                    className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg focus:ring-2 focus:ring-[#005a9e]"
                     required
                   >
                     {clientes.map((c) => (
@@ -627,7 +682,7 @@ export const ArtView: React.FC<ArtViewProps> = ({
                   <select
                     value={artAseguradoraId}
                     onChange={(e) => setArtAseguradoraId(e.target.value)}
-                    className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg"
+                    className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg focus:ring-2 focus:ring-[#005a9e]"
                     required
                   >
                     {aseguradoras.map((a) => (
@@ -637,20 +692,61 @@ export const ArtView: React.FC<ArtViewProps> = ({
                 </div>
               </div>
 
-              {/* Número de Contrato & CIIU */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* CAMBIO 1 — CUIT DEL TITULAR DEL CONTRATO */}
+              {(() => {
+                const titular = getCliente(empresaClienteId);
+                const cuitTitular = titular?.cuitCuilDni || '';
+                const validation = validateCuitCuil(cuitTitular.replace(/\D/g, ''));
+                return (
+                  <div className={`p-2.5 rounded-lg border text-xs flex items-center justify-between transition-all ${
+                    validation.isValid
+                      ? 'bg-blue-50/50 border-blue-200 text-slate-800'
+                      : 'bg-amber-50 border-amber-300 text-amber-900'
+                  }`}>
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#005a9e] block">
+                        CUIT del titular del contrato
+                      </span>
+                      <span className="font-mono font-bold text-sm text-slate-900 block">
+                        {cuitTitular || '(Sin CUIT registrado)'}
+                      </span>
+                    </div>
+
+                    <div>
+                      {validation.isValid ? (
+                        <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-md border border-emerald-200 inline-flex items-center space-x-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>CUIT Válido</span>
+                        </span>
+                      ) : (
+                        <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-md border border-amber-200 inline-flex items-center space-x-1">
+                          <AlertCircle className="w-3 h-3 text-amber-600" />
+                          <span>CUIT Inválido</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* CAMBIO 3 — NÚMERO DE CONTRATO MÁS GRANDE & CIIU */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">
+                  <label className="font-bold text-slate-900 block mb-1 text-xs">
                     N° Contrato ART <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     placeholder="ART-12345"
                     value={numContrato}
-                    onChange={(e) => setNumContrato(e.target.value)}
-                    className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg font-mono"
+                    onChange={(e) => {
+                      setNumContrato(e.target.value);
+                      setAltaError(null);
+                    }}
+                    className="w-full px-3.5 py-2.5 bg-white border-2 border-[#005a9e]/40 focus:border-[#005a9e] rounded-lg font-mono font-bold text-base text-slate-900 tracking-wider shadow-xs focus:ring-2 focus:ring-[#005a9e]/20 outline-none"
                     required
                   />
+                  <span className="text-[10px] text-[#6d6e71] mt-0.5 block">Identificador del contrato</span>
                 </div>
 
                 <div>
