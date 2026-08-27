@@ -729,15 +729,14 @@ export const ArtView: React.FC<ArtViewProps> = ({
 
                       {/* Alícuota */}
                       <td className="p-3 text-right whitespace-nowrap">
-                        <span className="font-mono font-bold text-slate-800 block">
-                          ${art.alicuotaFija}
+                        <span className="font-mono font-bold text-[#005a9e] text-base block">
+                          {art.alicuotaVariable}%
                         </span>
 
-                        <span className="text-[10px] text-[#6d6e71] font-mono">
-                          + {art.alicuotaVariable}%
+                        <span className="text-[10px] text-[#6d6e71] font-mono block">
+                          Fija: ${art.alicuotaFija}
                         </span>
                       </td>
-
                       {/* Permanencia */}
                       <td className="p-3 text-center">
 
