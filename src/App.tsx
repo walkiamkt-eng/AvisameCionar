@@ -578,7 +578,7 @@ function MainAppContent() {
               onUpdateAseguradora={handleUpdateAseguradora}
             />
           )}
-          {activeProcessId === 'admin-ramos' && (
+          {isSystemAdmin && activeProcessId === 'admin-ramos' && (
             <AdminRamosView
               ramos={ramos}
               onAddRamo={handleAddRamo}

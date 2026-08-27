@@ -38,6 +38,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { user } = useAuth();
 
+  const isSystemAdmin =
+    user?.email === 'walkia.mkt@gmail.com' ||
+    user?.email === 'cionarconsultores@gmail.com';
+
   const navItems = [
     {
       id: 'proceso-8',
@@ -220,21 +224,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </button>
 
-        {/* Administracion de Ramos */}
-        <button
-          onClick={() => onNavigate('admin-ramos')}
-          className={`w-full p-2.5 rounded-lg border text-left transition-all flex items-center space-x-2.5 cursor-pointer ${
-            activeProcessId === 'admin-ramos'
-              ? 'bg-[#005a9e] border-[#005a9e] text-white'
-              : 'bg-white border-[#c7c7c7] text-[#6d6e71] hover:border-[#007bc1] hover:text-[#005a9e]'
-          }`}
-        >
-          <ShieldCheck className="w-5 h-5 flex-shrink-0 text-[#00aeef]" />
-          <div className="min-w-0 flex-1">
-            <h4 className="text-xs font-bold truncate">Administrar Ramos</h4>
-            <p className="text-[10px] opacity-80 truncate">Catálogo general de seguros</p>
-          </div>
-        </button>
+        {isSystemAdmin && (
+          <>
+            {/* Administracion de Ramos */}
+            <button
+              onClick={() => onNavigate('admin-ramos')}
+              className={`w-full p-2.5 rounded-lg border text-left transition-all flex items-center space-x-2.5 cursor-pointer ${
+                activeProcessId === 'admin-ramos'
+                  ? 'bg-[#005a9e] border-[#005a9e] text-white'
+                  : 'bg-white border-[#c7c7c7] text-[#6d6e71] hover:border-[#007bc1] hover:text-[#005a9e]'
+              }`}
+            >
+              <ShieldCheck className="w-5 h-5 flex-shrink-0 text-[#00aeef]" />
+              <div className="min-w-0 flex-1">
+                <h4 className="text-xs font-bold truncate">Administrar Ramos</h4>
+                <p className="text-[10px] opacity-80 truncate">Catálogo general de seguros</p>
+              </div>
+            </button>
+          </>
+        )}
         {/* Highlighted Database Action Card */}
         <div className={`p-3 rounded-xl border text-xs space-y-2 transition-all ${
           isDbCleared
@@ -282,4 +290,3 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </aside>
   );
 };
-
