@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ContratoART, Cliente, Aseguradora } from '../types';
 import { validateCuitCuil } from '../utils/clienteValidations';
+import jsPDF from 'jspdf';
 import {
   Briefcase,
   Plus,
@@ -55,6 +56,259 @@ export const ArtView: React.FC<ArtViewProps> = ({
 
   const getCliente = (id: string) => clientes.find((c) => c.id === id);
   const getAseguradora = (id: string) => aseguradoras.find((a) => a.id === id);
+
+  const handleGenerarDatosContrato = (art: ContratoART) => {
+    const doc = new jsPDF();
+
+    const cliente = getCliente(art.clienteId);
+    const aseguradora = getAseguradora(art.aseguradoraId);
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 18;
+    const contentWidth = pageWidth - margin * 2;
+
+    let y = 18;
+
+    const addSectionTitle = (title: string) => {
+      doc.setFillColor(0, 90, 158);
+      doc.rect(margin, y, contentWidth, 8, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.text(title, margin + 4, y + 5.5);
+
+      y += 13;
+      doc.setTextColor(35, 45, 55);
+    };
+
+    const addField = (
+      label: string,
+      value: string,
+      x: number,
+      width: number
+    ) => {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(110, 110, 110);
+      doc.text(label.toUpperCase(), x, y);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(35, 45, 55);
+
+      const lines = doc.splitTextToSize(value || '—', width);
+      doc.text(lines, x, y + 5);
+
+      return Math.max(10, lines.length * 4 + 6);
+    };
+
+    // Encabezado
+    doc.setFillColor(0, 90, 158);
+    doc.rect(0, 0, pageWidth, 32, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.text('AVISAME', margin, 14);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text('Administración de Seguros', margin, 21);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('DOCUMENTO DE CONTRATO ART', pageWidth - margin, 15, {
+      align: 'right'
+    });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.text('Riesgos del Trabajo — Ley 24.557', pageWidth - margin, 21, {
+      align: 'right'
+    });
+
+    y = 43;
+
+    // Identificación
+    doc.setTextColor(35, 45, 55);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.text('CONTRATO DE RIESGOS DEL TRABAJO', margin, y);
+
+    y += 8;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(110, 110, 110);
+    doc.text(
+      `Documento generado el ${new Date().toLocaleDateString('es-AR')}`,
+      margin,
+      y
+    );
+
+    y += 10;
+
+    addSectionTitle('IDENTIFICACIÓN DEL CONTRATO');
+
+    const rowHeight = 15;
+
+    addField(
+      'N° Contrato',
+      art.numeroContrato,
+      margin,
+      contentWidth / 2 - 4
+    );
+
+    addField(
+      'Aseguradora ART',
+      aseguradora?.nombre || 'Aseguradora no identificada',
+      margin + contentWidth / 2,
+      contentWidth / 2
+    );
+
+    y += rowHeight;
+
+    addSectionTitle('EMPLEADOR / TITULAR');
+
+    addField(
+      'Razón Social / Nombre',
+      cliente?.nombreRazonSocial || 'Empleador no identificado',
+      margin,
+      contentWidth
+    );
+
+    y += rowHeight;
+
+    addField(
+      'CUIT',
+      cliente?.cuitCuilDni || 'Sin CUIT registrado',
+      margin,
+      contentWidth
+    );
+
+    y += rowHeight;
+
+    addSectionTitle('ACTIVIDAD');
+
+    addField(
+      'Código CIIU',
+      art.ciiuActividad || '—',
+      margin,
+      contentWidth / 3 - 4
+    );
+
+    addField(
+      'Descripción',
+      art.descripcionActividad || '—',
+      margin + contentWidth / 3,
+      (contentWidth * 2) / 3
+    );
+
+    y += rowHeight;
+
+    addSectionTitle('VIGENCIA');
+
+    addField(
+      'Fecha de inicio',
+      art.fechaInicioContrato || '—',
+      margin,
+      contentWidth / 2 - 4
+    );
+
+    addField(
+      'Fecha de fin',
+      art.fechaFinContrato || 'Sin fecha informada',
+      margin + contentWidth / 2,
+      contentWidth / 2
+    );
+
+    y += rowHeight;
+
+    addSectionTitle('INFORMACIÓN LABORAL Y ECONÓMICA');
+
+    addField(
+      'Cantidad de trabajadores',
+      `${art.cantidadTrabajadores} empleados`,
+      margin,
+      contentWidth / 3 - 4
+    );
+
+    addField(
+      'Masa salarial estimada',
+      `$${art.masaSalarialEstimada.toLocaleString('es-AR')}`,
+      margin + contentWidth / 3,
+      contentWidth / 3 - 4
+    );
+
+    addField(
+      'Alícuota',
+      `$${art.alicuotaFija} + ${art.alicuotaVariable}%`,
+      margin + (contentWidth * 2) / 3,
+      contentWidth / 3
+    );
+
+    y += rowHeight;
+
+    addSectionTitle('PERMANENCIA Y TRASPASO');
+
+    addField(
+      'Permanencia',
+      `${art.mesesPermanencia || 0} meses`,
+      margin,
+      contentWidth / 2 - 4
+    );
+
+    addField(
+      'Estado de traspaso',
+      art.esElegibleTraspaso
+        ? 'Elegible para traspaso'
+        : 'Aún no cumple los 12 meses',
+      margin + contentWidth / 2,
+      contentWidth / 2
+    );
+
+    y += rowHeight;
+
+    addSectionTitle('RENOVACIÓN');
+
+    addField(
+      'Última renovación',
+      art.fechaUltimaRenovacion
+        ? new Date(art.fechaUltimaRenovacion).toLocaleString('es-AR')
+        : 'Sin renovaciones previas',
+      margin,
+      contentWidth
+    );
+
+    // Pie
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    doc.setDrawColor(210, 210, 210);
+    doc.line(margin, pageHeight - 20, pageWidth - margin, pageHeight - 20);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(120, 120, 120);
+
+    doc.text(
+      'Documento informativo generado por AVISAME.',
+      margin,
+      pageHeight - 14
+    );
+
+    doc.text(
+      `Contrato ${art.numeroContrato}`,
+      pageWidth - margin,
+      pageHeight - 14,
+      { align: 'right' }
+    );
+
+    // Abrir en una nueva pestaña
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
+  };
 
   const filteredContratosArt = contratosArt.filter((art) => {
     const cliente = getCliente(art.clienteId);
@@ -512,6 +766,14 @@ export const ArtView: React.FC<ArtViewProps> = ({
                       {/* Acciones */}
                       <td className="p-3 text-center">
                         <div className="flex flex-col gap-1.5 min-w-[130px]">
+                           <button
+                            type="button"
+                            onClick={() => handleGenerarDatosContrato(art)}
+                            className="bg-slate-100 hover:bg-[#005a9e] hover:text-white text-[#005a9e] text-[10px] font-bold py-1.5 px-2 rounded-lg transition-all flex items-center justify-center space-x-1 border border-[#c7c7c7] cursor-pointer"
+                          >
+                            <Info className="w-3.5 h-3.5" />
+                            <span>Datos Contrato</span>
+                          </button>
 
                           <button
                             type="button"
