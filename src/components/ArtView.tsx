@@ -243,7 +243,7 @@ export const ArtView: React.FC<ArtViewProps> = ({
 
     addField(
       'Alícuota',
-      `$${art.alicuotaFija} + ${art.alicuotaVariable}%`,
+      `$${art.alicuotaFija} + ${art.alicuotaVariable.toLocaleString('es-AR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}%`,
       margin + (contentWidth * 2) / 3,
       contentWidth / 3
     );
@@ -730,7 +730,7 @@ export const ArtView: React.FC<ArtViewProps> = ({
                       {/* Alícuota */}
                       <td className="p-3 text-right whitespace-nowrap">
                         <span className="font-mono font-bold text-[#005a9e] text-base block">
-                          {art.alicuotaVariable}%
+                          {art.alicuotaVariable.toLocaleString('es-AR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}%
                         </span>
 
                         <span className="text-[10px] text-[#6d6e71] font-mono block">
@@ -927,7 +927,7 @@ export const ArtView: React.FC<ArtViewProps> = ({
                     </span>
 
                     <span className="font-mono font-bold text-slate-800">
-                      ${showRenewalModal.alicuotaFija} + {showRenewalModal.alicuotaVariable}%
+                      ${showRenewalModal.alicuotaFija} + ${showRenewalModal.alicuotaVariable.toLocaleString('es-AR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}%
                     </span>
                   </div>
 
@@ -1359,7 +1359,7 @@ export const ArtView: React.FC<ArtViewProps> = ({
 
                   <input
                     type="number"
-                    step="0.01"
+                    step="0.001"
                     value={alicuotaVar}
                     onChange={(e) =>
                       setAlicuotaVar(Number(e.target.value))
