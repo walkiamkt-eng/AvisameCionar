@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ContratoART, Cliente, Aseguradora } from '../types';
+import { ciiuCatalog } from '../data/ciiu';
 import { validateCuitCuil } from '../utils/clienteValidations';
 import jsPDF from 'jspdf';
 import {
@@ -42,6 +43,8 @@ export const ArtView: React.FC<ArtViewProps> = ({
   const [numContrato, setNumContrato] = useState('');
   const [ciiu, setCiiu] = useState('602300');
   const [actividad, setActividad] = useState('Servicios de Transporte Automotor de Cargas Generales');
+  const [ciiuSearch, setCiiuSearch] = useState('');
+  const [showCiiuResults, setShowCiiuResults] = useState(false);
   const [masaSalarial, setMasaSalarial] = useState<number>(35000000);
   const [trabajadores, setTrabajadores] = useState<number>(25);
   const [alicuotaFija, setAlicuotaFija] = useState<number>(850);
@@ -56,6 +59,28 @@ export const ArtView: React.FC<ArtViewProps> = ({
 
   const getCliente = (id: string) => clientes.find((c) => c.id === id);
   const getAseguradora = (id: string) => aseguradoras.find((a) => a.id === id);
+  const ciiuResults = ciiuCatalog.filter((item) => {
+  const search = ciiuSearch.trim().toLowerCase();
+
+  if (!search) return false;
+
+  return (
+    item.codigo.toLowerCase().includes(search) ||
+    item.descripcion.toLowerCase().includes(search)
+  );
+}).slice(0, 20);
+
+const handleSelectCiiu = (codigo: string) => {
+  const item = ciiuCatalog.find((c) => c.codigo === codigo);
+
+  if (!item) return;
+
+  setCiiu(item.codigo);
+  setActividad(item.descripcion);
+  setCiiuSearch('');
+  setShowCiiuResults(false);
+  setAltaError(null);
+};
 
   const handleGenerarDatosContrato = (art: ContratoART) => {
     const doc = new jsPDF();
@@ -339,6 +364,8 @@ export const ArtView: React.FC<ArtViewProps> = ({
     setNumContrato('');
     setCiiu('602300');
     setActividad('Servicios de Transporte Automotor de Cargas Generales');
+    setCiiuSearch('');
+    setShowCiiuResults(false);
     setMasaSalarial(35000000);
     setTrabajadores(25);
     setAlicuotaFija(850);
@@ -356,6 +383,8 @@ export const ArtView: React.FC<ArtViewProps> = ({
     setNumContrato(art.numeroContrato);
     setCiiu(art.ciiuActividad || '');
     setActividad(art.descripcionActividad || '');
+    setCiiuSearch('');
+    setShowCiiuResults(false);  
     setMasaSalarial(art.masaSalarialEstimada);
     setTrabajadores(art.cantidadTrabajadores);
     setAlicuotaFija(art.alicuotaFija);
@@ -1216,21 +1245,68 @@ export const ArtView: React.FC<ArtViewProps> = ({
                   </span>
                 </div>
 
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">
-                    CIIU Actividad{' '}
-                    <span className="text-red-500">*</span>
-                  </label>
+                <div className="relative">
+                <label className="font-bold text-slate-700 block mb-1">
+                  CIIU Actividad{' '}
+                  <span className="text-red-500">*</span>
+                </label>
 
-                  <input
-                    type="text"
-                    value={ciiu}
-                    onChange={(e) => setCiiu(e.target.value)}
-                    className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg font-mono"
-                    placeholder="602300"
-                    required
-                  />
-                </div>
+                <input
+                  type="text"
+                  value={ciiuSearch || ciiu}
+                  onChange={(e) => {
+                    setCiiuSearch(e.target.value);
+                    setShowCiiuResults(true);
+                    setCiiu('');
+                    setActividad('');
+                    setAltaError(null);
+                  }}
+                  onFocus={() => {
+                    if (ciiuSearch) {
+                      setShowCiiuResults(true);
+                    }
+                  }}
+                  className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg font-mono"
+                  placeholder="Buscar código o actividad"
+                  required={!ciiu}
+                />
+
+                {showCiiuResults && ciiuSearch && (
+                  <div className="absolute z-30 left-0 right-0 mt-1 bg-white border border-[#c7c7c7] rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {ciiuResults.length > 0 ? (
+                      ciiuResults.map((item) => (
+                        <button
+                          key={item.codigo}
+                          type="button"
+                          onClick={() => handleSelectCiiu(item.codigo)}
+                          className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b border-slate-100 last:border-b-0"
+                        >
+                          <span className="font-mono font-bold text-[#005a9e]">
+                            {item.codigo}
+                          </span>
+                          <span className="text-slate-700 ml-2">
+                            {item.descripcion}
+                          </span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-3 text-[#6d6e71]">
+                        No se encontraron actividades CIIU.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <span className="text-[10px] text-[#6d6e71] mt-0.5 block">
+                  Busque por código o descripción
+                </span>
+
+                {ciiu && (
+                  <span className="text-[10px] text-emerald-700 font-semibold mt-0.5 block">
+                    CIIU seleccionado: {ciiu}
+                  </span>
+                )}
+              </div>
 
               </div>
 
@@ -1242,14 +1318,13 @@ export const ArtView: React.FC<ArtViewProps> = ({
                   <span className="text-red-500">*</span>
                 </label>
 
-                <input
-                  type="text"
-                  value={actividad}
-                  onChange={(e) => setActividad(e.target.value)}
-                  className="w-full p-2 bg-slate-50 border border-[#c7c7c7] rounded-lg"
-                  placeholder="Ej: Transporte Automotor de Cargas Generales"
-                  required
-                />
+                <div className="w-full p-2 bg-slate-100 border border-[#c7c7c7] rounded-lg text-slate-700 min-h-[38px]">
+                  {actividad || 'La descripción se completa automáticamente al seleccionar el CIIU.'}
+                </div>
+
+                <span className="text-[10px] text-[#6d6e71] mt-0.5 block">
+                  Descripción oficial correspondiente al código CIIU seleccionado
+                </span>
 
               </div>
 
