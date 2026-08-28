@@ -334,7 +334,14 @@ const handleSelectCiiu = (codigo: string) => {
     const pdfUrl = URL.createObjectURL(pdfBlob);
     window.open(pdfUrl, '_blank');
   };
-
+  const contratosPorAseguradora = aseguradoras
+    .map((aseguradora) => ({
+      ...aseguradora,
+      cantidadContratos: contratosArt.filter(
+        (contrato) => contrato.aseguradoraId === aseguradora.id
+      ).length
+    }))
+    .filter((aseguradora) => aseguradora.cantidadContratos > 0);
   const filteredContratosArt = contratosArt.filter((art) => {
     const cliente = getCliente(art.clienteId);
     const aseguradora = getAseguradora(art.aseguradoraId);
@@ -833,6 +840,34 @@ const handleSelectCiiu = (codigo: string) => {
           </table>
         </div>
       </div>
+
+            {/* Resumen de contratos por aseguradora */}
+      {contratosPorAseguradora.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {contratosPorAseguradora.map((aseguradora) => (
+            <div
+              key={aseguradora.id}
+              className="bg-white rounded-xl border border-[#c7c7c7] shadow-xs p-4"
+            >
+              <span className="text-[10px] font-bold text-[#6d6e71] uppercase tracking-wider block">
+                Nombre de la aseguradora
+              </span>
+
+              <span className="text-sm font-bold text-[#005a9e] block mt-1">
+                {aseguradora.nombre}
+              </span>
+
+              <span className="text-[10px] font-bold text-[#6d6e71] uppercase tracking-wider block mt-3">
+                Cantidad de contratos
+              </span>
+
+              <span className="text-xl font-bold text-slate-900 block mt-1">
+                {aseguradora.cantidadContratos}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ============================================================= */}
       {/* MODAL: RENOVAR CONTRATO ART */}
